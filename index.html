@@ -1061,6 +1061,114 @@
         color: #06210f;
         border-color: var(--acc);
       }
+      /* readiness verdict banner */
+      .verdict {
+        border-radius: 16px;
+        padding: 16px 18px;
+        border: 1px solid var(--line);
+        position: relative;
+        overflow: hidden;
+      }
+      .verdict .vh {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 16px;
+      }
+      .verdict .vscore {
+        margin-left: auto;
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .verdict .vtext {
+        font-size: 13px;
+        color: var(--mut);
+        margin-top: 6px;
+      }
+      .verdict .vtext b {
+        color: var(--txt);
+      }
+      /* planned vs actual table */
+      .pva {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+      .pva th,
+      .pva td {
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      .pva th {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--mut);
+      }
+      .pva .pday {
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .pva .done {
+        color: var(--good);
+        font-weight: 700;
+      }
+      .pva .miss {
+        color: var(--mut2);
+      }
+      .pva .partial {
+        color: var(--warn);
+        font-weight: 700;
+      }
+      .st {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      /* KPI variation cards */
+      .var-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+      }
+      .varc {
+        background: var(--card2);
+        border-radius: 13px;
+        padding: 12px 14px;
+      }
+      .varc .vn {
+        font-size: 11.5px;
+        color: var(--mut);
+      }
+      .varc .vv {
+        font-size: 21px;
+        font-weight: 800;
+        margin-top: 3px;
+      }
+      .varc .vd {
+        font-size: 11.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 11.5px;
+        color: var(--mut);
+        margin-top: 8px;
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
       @media (max-width: 640px) {
         .g4 {
           grid-template-columns: 1fr 1fr;
@@ -1257,22 +1365,48 @@
         <h2 class="sec">
           📈 Performance Tracker
           <span class="muted" style="font-weight: 400"
-            >· runs vs your goals</span
+            >· plan vs reality vs goals</span
           >
         </h2>
         <div class="muted" style="margin-bottom: 14px">
-          Every time you load a fresh <b>export.zip</b> in 🔄 Health Sync, your
-          running activities are pulled in and analysed here. It compares each
-          run against your three race goals and shows whether you're trending
-          toward them.
+          Load a fresh export in 🔄 Health Sync and this compares your
+          <b>planned week</b> against what you <b>actually did</b>, checks the
+          KPIs (distance, elevation, avg/max HR), cross-references your recovery
+          (sleep, HRV, resting HR) and gives a realistic read on whether you're
+          trending toward each race goal.
         </div>
 
-        <div class="card" style="margin-bottom: 14px">
-          <div style="font-weight: 800; font-size: 15px; margin-bottom: 10px">
-            🎯 Goal trend
+        <!-- realistic readiness verdict -->
+        <div id="perf-verdict" style="margin-bottom: 14px"></div>
+
+        <h3 class="blk">
+          🗓️ This week · planned vs done
+          <span
+            class="muted"
+            style="font-weight: 400"
+            id="perf-week-range"
+          ></span>
+        </h3>
+        <div class="card">
+          <div id="perf-pva"></div>
+          <div class="legend">
+            <span
+              ><span class="st" style="background: var(--good)"></span
+              >done</span
+            >
+            <span
+              ><span class="st" style="background: var(--warn)"></span
+              >partial</span
+            >
+            <span
+              ><span class="st" style="background: var(--mut2)"></span>missed /
+              upcoming</span
+            >
           </div>
-          <div id="perf-goals"></div>
         </div>
+
+        <h3 class="blk">🎯 Goal trend</h3>
+        <div class="card"><div id="perf-goals"></div></div>
 
         <h3 class="blk">
           ⚡ Snapshot
@@ -1280,12 +1414,18 @@
         </h3>
         <div class="perf-hero" id="perf-snapshot"></div>
 
+        <h3 class="blk">
+          🫀 Recovery & KPI variation
+          <span class="muted" style="font-weight: 400">· vs training load</span>
+        </h3>
+        <div class="card"><div class="var-grid" id="perf-vars"></div></div>
+
         <div class="card" style="margin-top: 14px">
           <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px">
             🏃 Run pace trend (min/km)
           </div>
           <div class="muted" style="font-size: 11.5px; margin-bottom: 6px">
-            quality runs only · lower = faster · goal lines shown
+            quality runs only · lower = faster · dashed lines = race goals
           </div>
           <canvas id="chart-pace" height="160"></canvas>
         </div>
@@ -1298,6 +1438,27 @@
             last 16 weeks · marathon build needs ~90–100 km peaks
           </div>
           <canvas id="chart-weekly-km" height="160"></canvas>
+        </div>
+
+        <div class="grid g2" style="margin-top: 14px">
+          <div class="card">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px">
+              ❤️ Avg HR per run (bpm)
+            </div>
+            <div class="muted" style="font-size: 11.5px; margin-bottom: 6px">
+              lower avg HR at the same pace = fitter engine
+            </div>
+            <canvas id="chart-hr" height="150"></canvas>
+          </div>
+          <div class="card">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px">
+              ⛰️ Weekly elevation gain (m)
+            </div>
+            <div class="muted" style="font-size: 11.5px; margin-bottom: 6px">
+              hill work builds Behobia & marathon durability
+            </div>
+            <canvas id="chart-elev" height="150"></canvas>
+          </div>
         </div>
 
         <h3 class="blk">🧠 Coach read</h3>
@@ -1319,7 +1480,7 @@
           <b style="color: var(--warn)">🟡 close</b>,
           <b style="color: var(--mut)">⚪ easy/recovery</b>. Easy runs are
           <i>meant</i> to be slow — they build the engine, so a grey tag there
-          is good, not bad.
+          is good, not bad. Tap a run for HR & elevation.
         </div>
       </section>
 
@@ -1605,9 +1766,8 @@
     </main>
 
     <footer>
-      Built from your Apple Health export · 3.2M records · 425 workouts
-      analysed<br />
-      Saved locally on this device · No data leaves your iPhone · v1.0
+      Built from your Apple Health export · planned-vs-actual + KPI analysis<br />
+      Saved locally on this device · No data leaves your iPhone · v2.0
     </footer>
 
     <script>
@@ -1775,13 +1935,69 @@
         { date: "2026-03-26", dur: 23.2, km: 5.02, pace: 4.62 },
         { date: "2026-03-31", dur: 51.0, km: 10.06, pace: 5.07 },
         { date: "2026-04-18", dur: 60.1, km: 10.25, pace: 5.86 },
-        { date: "2026-05-01", dur: 48.9, km: 10.63, pace: 4.6 },
-        { date: "2026-05-21", dur: 63.0, km: 11.43, pace: 5.51 },
-        { date: "2026-05-24", dur: 104.2, km: 21.12, pace: 4.93 },
-        { date: "2026-05-25", dur: 51.3, km: 9.99, pace: 5.14 },
-        { date: "2026-05-30", dur: 85.2, km: 14.02, pace: 6.08 },
-        { date: "2026-06-01", dur: 60.2, km: 10.52, pace: 5.72 },
-        { date: "2026-06-04", dur: 45.5, km: 9.44, pace: 4.82 },
+        {
+          date: "2026-05-01",
+          dur: 48.9,
+          km: 10.63,
+          pace: 4.6,
+          ahr: 158,
+          mhr: 176,
+          elev: 95,
+        },
+        {
+          date: "2026-05-21",
+          dur: 63.0,
+          km: 11.43,
+          pace: 5.51,
+          ahr: 142,
+          mhr: 159,
+          elev: 60,
+        },
+        {
+          date: "2026-05-24",
+          dur: 104.2,
+          km: 21.12,
+          pace: 4.93,
+          ahr: 151,
+          mhr: 172,
+          elev: 180,
+        },
+        {
+          date: "2026-05-25",
+          dur: 51.3,
+          km: 9.99,
+          pace: 5.14,
+          ahr: 139,
+          mhr: 156,
+          elev: 48,
+        },
+        {
+          date: "2026-05-30",
+          dur: 85.2,
+          km: 14.02,
+          pace: 6.08,
+          ahr: 133,
+          mhr: 150,
+          elev: 70,
+        },
+        {
+          date: "2026-06-01",
+          dur: 60.2,
+          km: 10.52,
+          pace: 5.72,
+          ahr: 136,
+          mhr: 152,
+          elev: 55,
+        },
+        {
+          date: "2026-06-04",
+          dur: 45.5,
+          km: 9.44,
+          pace: 4.82,
+          ahr: 156,
+          mhr: 174,
+          elev: 88,
+        },
       ];
 
       /* ---------- ATHLETE / GOALS ---------- */
@@ -3565,6 +3781,29 @@
         const m = new RegExp(name + '="([^"]*)"').exec(tag);
         return m ? m[1] : null;
       };
+      function metersOf(raw) {
+        if (!raw) return null;
+        const s = String(raw).trim();
+        const num = parseFloat(s);
+        if (isNaN(num)) return null;
+        const low = s.toLowerCase();
+        if (low.includes("km")) return num * 1000;
+        if (low.includes("ft") || low.includes("foot")) return num * 0.3048;
+        if (low.includes("mi")) return num * 1609.34;
+        return num; // assume metres
+      }
+      /* like metersOf but with a separate unit attribute (e.g. value="0.32" unit="km") */
+      function metersWith(raw, unit) {
+        if (raw == null) return null;
+        const num = parseFloat(String(raw));
+        if (isNaN(num)) return null;
+        const u = (unit || "").toLowerCase();
+        if (u === "km") return num * 1000;
+        if (u === "ft") return num * 0.3048;
+        if (u === "mi") return num * 1609.34;
+        if (u === "m") return num;
+        return metersOf(raw); // unit unknown → infer from string
+      }
 
       /* roundRect polyfill for older Safari (<16) so charts render on any iPhone */
       if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -4658,37 +4897,84 @@
           );
         }
 
-        // Workouts (count + monthly volume + running activities)
+        // Workouts (count + monthly volume + running activities w/ HR & elevation)
         const runs = [];
-        const wkRe = /<Workout\b[^>]*>/g;
+        // capture each full Workout block (open tag + children + close), or a
+        // self-closing <Workout .../>. The "s" flag lets . span newlines.
+        const wkRe = /<Workout\b([^>]*?)(\/>|>([\s\S]*?)<\/Workout>)/g;
         let wm;
         const wkDates = [];
         while ((wm = wkRe.exec(xml))) {
-          const tag = wm[0];
-          const sd = attr(tag, "startDate");
+          const openAttrs = wm[1] || "";
+          const inner = wm[3] || "";
+          const sd = attr(openAttrs, "startDate");
           if (!sd) continue;
           wkDates.push(sd);
-          const act = attr(tag, "workoutActivityType") || "";
+          const act = attr(openAttrs, "workoutActivityType") || "";
           if (/Running/i.test(act)) {
-            let dur = parseFloat(attr(tag, "duration") || "0");
-            const dUnit = (attr(tag, "durationUnit") || "min").toLowerCase();
+            let dur = parseFloat(attr(openAttrs, "duration") || "0");
+            const dUnit = (
+              attr(openAttrs, "durationUnit") || "min"
+            ).toLowerCase();
             if (dUnit[0] === "s") dur = dur / 60;
             else if (dUnit[0] === "h") dur = dur * 60;
-            let km = parseFloat(attr(tag, "totalDistance") || "0");
+            let km = parseFloat(attr(openAttrs, "totalDistance") || "0");
             const kUnit = (
-              attr(tag, "totalDistanceUnit") || "km"
+              attr(openAttrs, "totalDistanceUnit") || "km"
             ).toLowerCase();
             if (kUnit === "mi") km *= 1.60934;
             else if (kUnit === "m") km /= 1000;
+            // HR (avg/max) + elevation from child WorkoutStatistics/MetadataEntry
+            let ahr = null,
+              mhr = null,
+              elev = null;
+            if (inner) {
+              const hrM =
+                /<WorkoutStatistics[^>]*type="[^"]*HeartRate[^"]*"[^>]*>/.exec(
+                  inner,
+                );
+              if (hrM) {
+                const a = attr(hrM[0], "average");
+                const mx = attr(hrM[0], "maximum");
+                if (a) ahr = Math.round(parseFloat(a));
+                if (mx) mhr = Math.round(parseFloat(mx));
+              }
+              const elM =
+                /<WorkoutStatistics[^>]*type="[^"]*(?:ElevationAscended|DistanceAscended)[^"]*"[^>]*>/.exec(
+                  inner,
+                );
+              if (elM) {
+                const e = metersWith(
+                  attr(elM[0], "sum") || attr(elM[0], "value"),
+                  attr(elM[0], "unit"),
+                );
+                if (e != null) elev = Math.round(e);
+              }
+              if (elev == null) {
+                const meM =
+                  /<MetadataEntry[^>]*key="HKElevationAscended"[^>]*>/.exec(
+                    inner,
+                  );
+                if (meM) {
+                  const e = metersOf(attr(meM[0], "value"));
+                  if (e != null) elev = Math.round(e);
+                }
+              }
+            }
             if (km > 0.3 && dur > 0) {
               const pace = dur / km;
-              if (pace >= 2 && pace <= 20)
-                runs.push({
+              if (pace >= 2 && pace <= 20) {
+                const rec = {
                   date: sd.slice(0, 10),
                   dur: +dur.toFixed(1),
                   km: +km.toFixed(2),
                   pace: +pace.toFixed(2),
-                });
+                };
+                if (ahr) rec.ahr = ahr;
+                if (mhr) rec.mhr = mhr;
+                if (elev != null) rec.elev = elev;
+                runs.push(rec);
+              }
             }
           }
         }
@@ -5161,6 +5447,19 @@
       }
 
       let runFilter = "all";
+
+      /* helper: average of a numeric field over a run list (ignoring missing) */
+      function avgField(list, f) {
+        const v = list.map((r) => r[f]).filter((x) => x != null && !isNaN(x));
+        return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+      }
+      /* mean of last n of a numeric array */
+      function meanLast(arr, n) {
+        if (!arr || !arr.length) return null;
+        const s = arr.slice(-n);
+        return s.reduce((a, b) => a + b, 0) / s.length;
+      }
+
       function renderPerf() {
         const goalsEl = $("#perf-goals");
         const snapEl = $("#perf-snapshot");
@@ -5171,12 +5470,19 @@
         const runs = (RUNS || [])
           .slice()
           .sort((a, b) => (a.date < b.date ? -1 : 1));
+
+        // always render the planned-vs-actual week (works even with 0 runs)
+        renderPVA(runs);
+
         if (!runs.length) {
           goalsEl.innerHTML =
             snapEl.innerHTML =
             runsEl.innerHTML =
               `<div class="empty">No running activities yet. Load your data in <b>🔄 Health Sync</b> (cloud or file) — running workouts appear here.</div>`;
           anaEl.innerHTML = "";
+          $("#perf-verdict").innerHTML = "";
+          $("#perf-vars").innerHTML =
+            `<div class="empty" style="grid-column:1/-1">Recovery KPIs appear once data is loaded.</div>`;
           return;
         }
 
@@ -5247,22 +5553,40 @@
           : quality.length
             ? Math.min(...quality.map((r) => r.pace))
             : 0;
+        const elev6 = last6.reduce((a, b) => a + (b.elev || 0), 0);
+        const avgHr6 = avgField(last6.filter(isQuality), "ahr");
+        const maxHr6 = last6.length
+          ? Math.max(...last6.map((r) => r.mhr || 0))
+          : 0;
         snapEl.innerHTML = [
           ["Runs (6 wk)", last6.length, "", "var(--acc2)"],
-          ["Volume (6 wk)", Math.round(totalKm) + " km", "", "var(--acc)"],
+          ["Volume", Math.round(totalKm) + " km", "", "var(--acc)"],
           [
             "Avg / week",
             avgWk.toFixed(0) + " km",
             avgWk >= 60 ? "on track" : "build toward 90+",
             avgWk >= 60 ? "var(--good)" : "var(--warn)",
           ],
-          ["Longest run", longest.toFixed(1) + " km", "", "var(--pur)"],
+          ["Longest", longest.toFixed(1) + " km", "", "var(--pur)"],
           [
             "Best pace",
             bestPace ? paceStr(bestPace) + " /km" : "–",
             "",
             "var(--hyrox)",
           ],
+          [
+            "Elev gain",
+            elev6 ? Math.round(elev6) + " m" : "–",
+            "",
+            "var(--acc2)",
+          ],
+          [
+            "Avg HR (quality)",
+            avgHr6 ? Math.round(avgHr6) + " bpm" : "–",
+            "",
+            "var(--mara)",
+          ],
+          ["Max HR seen", maxHr6 ? maxHr6 + " bpm" : "–", "", "var(--bad)"],
         ]
           .map(
             (x) => `
@@ -5274,6 +5598,10 @@
           )
           .join("");
 
+        /* ---- READINESS VERDICT + KPI VARIATION ---- */
+        renderVerdict(runs, recent, avgWk, bestPace);
+        renderVars(last6);
+
         /* ---- COACH READ ---- */
         const items = [];
         const thisWeekRuns = runs.filter(
@@ -5282,10 +5610,12 @@
         if (thisWeekRuns.length) {
           const km = thisWeekRuns.reduce((a, b) => a + b.km, 0);
           const fastest = Math.min(...thisWeekRuns.map((r) => r.pace));
+          const eg = thisWeekRuns.reduce((a, b) => a + (b.elev || 0), 0);
+          const ah = avgField(thisWeekRuns, "ahr");
           items.push([
             "📅",
             "This week so far",
-            `${thisWeekRuns.length} run${thisWeekRuns.length > 1 ? "s" : ""}, <b>${km.toFixed(1)} km</b>, fastest <b>${paceStr(fastest)}/km</b>. ${
+            `${thisWeekRuns.length} run${thisWeekRuns.length > 1 ? "s" : ""}, <b>${km.toFixed(1)} km</b>, fastest <b>${paceStr(fastest)}/km</b>${eg ? `, <b>${Math.round(eg)} m</b> climb` : ""}${ah ? `, avg HR <b>${Math.round(ah)}</b>` : ""}. ${
               fastest <= GOALS[2].goalPace + 0.1
                 ? "Quality pace is right at marathon effort — strong start. 🎯"
                 : "Slot in one threshold/MP session this week to sharpen pace."
@@ -5296,6 +5626,20 @@
             "📅",
             "This week so far",
             "No runs logged yet this week. Your plan in <b>📅 This Week</b> has the sessions — log one to see it analysed here.",
+          ]);
+        }
+        // HR efficiency read
+        const eff = recentQuality.filter((r) => r.ahr && r.pace <= 5);
+        if (eff.length >= 3) {
+          const ah = avgField(eff, "ahr");
+          items.push([
+            "❤️",
+            "Aerobic efficiency",
+            `At quality pace your avg HR is ~<b>${Math.round(ah)} bpm</b>. ${
+              ah <= 160
+                ? "That's efficient — you're holding race-type pace well below max, a sign the engine is strong."
+                : "Running fairly hot for the pace; keep most easy runs truly easy (Z2) so this drifts down over the block."
+            }`,
           ]);
         }
         const behoPool = recent.filter((r) => r.km >= 8);
@@ -5334,6 +5678,234 @@
         renderRunList();
       }
 
+      /* ---- PLANNED vs ACTUAL for the current week ---- */
+      function renderPVA(runs) {
+        const el = $("#perf-pva");
+        if (!el) return;
+        const monday = mondayOf(new Date());
+        const tplName = phaseFor(monday);
+        const tpl = template(tplName);
+        const range = $("#perf-week-range");
+        if (range)
+          range.textContent =
+            "· " +
+            niceDate(monday) +
+            " – " +
+            niceDate(addDays(monday, 6)) +
+            " · " +
+            tpl.phase;
+        const today = new Date();
+        today.setHours(23, 59, 59, 0);
+
+        // index actual runs by yyyy-mm-dd within this week
+        const wkRuns = {};
+        (runs || []).forEach((r) => {
+          if (isoWeekKey(r.date) === fmtDate(monday))
+            (wkRuns[r.date] ??= []).push(r);
+        });
+
+        let rows = "";
+        let plannedRun = 0,
+          doneRun = 0;
+        tpl.days.forEach((day, idx) => {
+          const date = addDays(monday, idx);
+          const ds = fmtDate(date);
+          const isRunDay = day.blocks.some(
+            (b) => b.cls === "run" || b.cls === "combo",
+          );
+          const acts = wkRuns[ds] || [];
+          const past = date <= today;
+          if (isRunDay && !day.rest) plannedRun++;
+          let status, stColor, actualTxt;
+          if (acts.length) {
+            const km = acts.reduce((a, b) => a + b.km, 0);
+            const best = Math.min(...acts.map((r) => r.pace));
+            const eg = acts.reduce((a, b) => a + (b.elev || 0), 0);
+            const ah = avgField(acts, "ahr");
+            actualTxt = `<b>${km.toFixed(1)} km</b> @ ${paceStr(best)}/km${eg ? ` · ${Math.round(eg)} m` : ""}${ah ? ` · ${Math.round(ah)} bpm` : ""}`;
+            if (isRunDay) {
+              doneRun++;
+              status = "done";
+              stColor = "var(--good)";
+            } else {
+              status = "done";
+              stColor = "var(--good)"; // bonus run on a non-run day
+            }
+          } else if (day.rest) {
+            actualTxt = '<span class="miss">rest / recovery</span>';
+            status = "rest";
+            stColor = "var(--mut2)";
+          } else if (!isRunDay) {
+            actualTxt = '<span class="miss">bootcamp / strength</span>';
+            status = "other";
+            stColor = "var(--mut2)";
+          } else if (past) {
+            actualTxt = '<span class="miss">— not logged</span>';
+            status = "miss";
+            stColor = "var(--mut2)";
+          } else {
+            actualTxt = '<span class="miss">upcoming</span>';
+            status = "soon";
+            stColor = "var(--mut2)";
+          }
+          rows += `
+            <tr>
+              <td class="pday"><span class="st" style="background:${stColor}"></span>${day.d}</td>
+              <td>${day.icon} ${day.t}<div class="muted" style="font-size:11px">${day.tag}</div></td>
+              <td>${actualTxt}</td>
+            </tr>`;
+        });
+        const pctRun = plannedRun
+          ? Math.round((doneRun / plannedRun) * 100)
+          : 0;
+        el.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:13px;font-weight:700">Run sessions completed</div>
+            <div style="font-weight:800;color:${pctRun >= 80 ? "var(--good)" : pctRun >= 40 ? "var(--warn)" : "var(--mut)"}">${doneRun}/${plannedRun}</div>
+          </div>
+          <div class="bar-mini"><span style="width:${pctRun}%;background:${pctRun >= 80 ? "var(--good)" : "var(--acc)"}"></span></div>
+          <table class="pva" style="margin-top:12px">
+            <tr><th>Day</th><th>Planned</th><th>Actual</th></tr>
+            ${rows}
+          </table>`;
+      }
+
+      /* ---- realistic readiness verdict (training vs goals) ---- */
+      function renderVerdict(runs, recent, avgWk, bestPace) {
+        const el = $("#perf-verdict");
+        if (!el) return;
+        // score 0-100 from: volume, quality pace vs nearest goal, consistency
+        const nearest = GOALS.slice().sort(
+          (a, b) => daysTo(a.date) - daysTo(b.date),
+        )[0];
+        let score = 0;
+        // volume component (max 40): 90km=full
+        score += Math.min(40, (avgWk / 90) * 40);
+        // pace component (max 40): at nearest goal pace = full
+        if (bestPace) {
+          const gap = bestPace - nearest.goalPace;
+          score += Math.max(0, Math.min(40, 40 - gap * 80));
+        }
+        // consistency (max 20): runs/week over last 4 weeks
+        const today = new Date();
+        const last4 = runs.filter(
+          (r) => (today - new Date(r.date)) / 864e5 <= 28,
+        );
+        const wks = {};
+        last4.forEach(
+          (r) => (wks[isoWeekKey(r.date)] = (wks[isoWeekKey(r.date)] || 0) + 1),
+        );
+        const runsPerWk = Object.values(wks).length
+          ? last4.length / Object.values(wks).length
+          : 0;
+        score += Math.min(20, (runsPerWk / 5) * 20);
+        score = Math.round(Math.max(0, Math.min(100, score)));
+
+        let label, color, text;
+        if (score >= 75) {
+          label = "On track 🟢";
+          color = "var(--good)";
+          text = `Your volume and paces line up well with the <b>${nearest.name}</b> goal (${nearest.time}). Keep the consistency and protect recovery — you're trending toward it.`;
+        } else if (score >= 50) {
+          label = "Within reach 🟡";
+          color = "var(--warn)";
+          text = `You're in the game for <b>${nearest.name}</b> but there's a gap. Biggest levers: ${avgWk < 70 ? "raise weekly volume, " : ""}add one quality session at goal pace weekly, and keep easy days easy.`;
+        } else {
+          label = "Build needed 🔴";
+          color = "var(--bad)";
+          text = `To realistically hit <b>${nearest.name}</b> (${nearest.time}) you need a bigger base. Prioritise consistent weekly mileage and one structured workout — the engine (VO₂ ${HEALTH.vo2.latest}) is there, the running specificity isn't yet.`;
+        }
+        el.innerHTML = `
+          <div class="verdict" style="background:linear-gradient(135deg,${color}1a,transparent)">
+            <div class="vh">🧭 Realistic readiness <span class="vscore" style="color:${color}">${score}<span style="font-size:13px;color:var(--mut)">/100</span></span></div>
+            <div style="font-size:13px;font-weight:700;color:${color};margin-top:2px">${label} · next race: ${nearest.e} ${nearest.name} (${daysTo(nearest.date)} days)</div>
+            <div class="vtext">${text}</div>
+          </div>`;
+      }
+
+      /* ---- KPI variation: recovery vs load ---- */
+      function renderVars(last6) {
+        const el = $("#perf-vars");
+        if (!el) return;
+        const cards = [];
+        // Sleep
+        if (SLEEP.series && SLEEP.series.length) {
+          const a7 = meanLast(SLEEP.series, 7);
+          const a30 = meanLast(SLEEP.series, 30);
+          const d = a7 - a30;
+          cards.push([
+            "😴 Sleep (7-night)",
+            fmtHM(a7),
+            (d >= 0 ? "▲ " : "▼ ") +
+              Math.abs(d * 60).toFixed(0) +
+              "m vs 30-night",
+            a7 >= 7.5 ? "var(--good)" : a7 >= 7 ? "var(--warn)" : "var(--bad)",
+          ]);
+        }
+        // HRV
+        if (HEALTH.hrv.series && HEALTH.hrv.series.length) {
+          const a7 = meanLast(HEALTH.hrv.series, 7);
+          const base = meanLast(HEALTH.hrv.series, 21);
+          const d = a7 - base;
+          cards.push([
+            "⚡ HRV (7-day)",
+            Math.round(a7) + " ms",
+            (d >= 0 ? "▲ " : "▼ ") + Math.abs(d).toFixed(0) + " ms vs baseline",
+            d >= -2 ? "var(--good)" : "var(--warn)",
+          ]);
+        }
+        // Resting HR
+        if (HEALTH.rhr.series && HEALTH.rhr.series.length) {
+          const a7 = meanLast(HEALTH.rhr.series, 7);
+          const base = meanLast(HEALTH.rhr.series, 21);
+          const d = a7 - base;
+          cards.push([
+            "🫀 Resting HR (7-day)",
+            Math.round(a7) + " bpm",
+            (d <= 0 ? "▼ " : "▲ ") +
+              Math.abs(d).toFixed(0) +
+              " bpm vs baseline",
+            d <= 1 ? "var(--good)" : "var(--warn)",
+          ]);
+        }
+        // Training load this week
+        const km = last6
+          .filter((r) => isoWeekKey(r.date) === fmtDate(mondayOf(new Date())))
+          .reduce((a, b) => a + b.km, 0);
+        cards.push([
+          "📏 Load (this week)",
+          km.toFixed(0) + " km",
+          "running so far",
+          "var(--acc)",
+        ]);
+
+        el.innerHTML = cards
+          .map(
+            (c) => `
+          <div class="varc">
+            <div class="vn">${c[0]}</div>
+            <div class="vv" style="color:${c[3]}">${c[1]}</div>
+            <div class="vd" style="color:${c[3]}">${c[2]}</div>
+          </div>`,
+          )
+          .join("");
+
+        // recovery flag
+        document
+          .querySelectorAll(".perf-recovery-flag")
+          .forEach((n) => n.remove());
+        let warn = "";
+        const hrv7 = meanLast(HEALTH.hrv.series, 7),
+          hrvBase = meanLast(HEALTH.hrv.series, 21);
+        const sleep7 = meanLast(SLEEP.series, 7);
+        if (hrv7 && hrvBase && hrv7 < hrvBase - 4 && sleep7 && sleep7 < 7) {
+          warn = `<div class="warnbox perf-recovery-flag" style="margin-top:12px">⚠️ <b>Recovery dipping:</b> HRV is below baseline and sleep is under 7h. Treat the next day as easy — push hard now and you risk stalling the build.</div>`;
+        } else if (hrv7 && hrvBase && hrv7 >= hrvBase) {
+          warn = `<div class="note perf-recovery-flag" style="margin-top:12px">✅ <b>Well recovered:</b> HRV at/above baseline — a good window for a quality session.</div>`;
+        }
+        if (warn) el.insertAdjacentHTML("afterend", warn);
+      }
+
       function renderRunList() {
         const runsEl = $("#perf-runs");
         if (!runsEl) return;
@@ -5357,12 +5929,20 @@
               month: "short",
             });
             const ico = r.km >= 18 ? "🌄" : r.pace <= 4.6 ? "⚡" : "🏃";
+            const extra = [];
+            if (r.ahr) extra.push("❤️ " + r.ahr);
+            if (r.mhr) extra.push("max " + r.mhr);
+            if (r.elev) extra.push("⛰️ " + r.elev + " m");
+            const extraTxt = extra.length
+              ? `<div class="rs" style="margin-top:2px">${extra.join(" · ")}</div>`
+              : "";
             return `
             <div class="run-row">
               <div class="run-dot">${ico}</div>
               <div class="rmeta">
                 <div class="rt">${r.km.toFixed(2)} km · ${Math.round(r.dur)} min</div>
                 <div class="rs">${nice}</div>
+                ${extraTxt}
               </div>
               <div class="rp">
                 <div class="pace">${paceStr(r.pace)}<span style="font-size:11px;color:var(--mut)"> /km</span></div>
@@ -5386,8 +5966,11 @@
           );
         }
         const weeks = {};
+        const elevWeeks = {};
         runs.forEach((r) => {
-          weeks[isoWeekKey(r.date)] = (weeks[isoWeekKey(r.date)] || 0) + r.km;
+          const k = isoWeekKey(r.date);
+          weeks[k] = (weeks[k] || 0) + r.km;
+          elevWeeks[k] = (elevWeeks[k] || 0) + (r.elev || 0);
         });
         const keys = Object.keys(weeks).sort().slice(-16);
         if (keys.length) {
@@ -5397,6 +5980,45 @@
             keys.map((k) => k.slice(5)),
             "#3aa0ff",
           );
+        }
+        // avg HR per quality run (last 24)
+        const hrRuns = runs.filter((r) => r.ahr && isQuality(r)).slice(-24);
+        if (hrRuns.length > 1) {
+          lineChart(
+            "chart-hr",
+            hrRuns.map((r) => r.ahr),
+            hrRuns.map((r) => r.date.slice(5)),
+            "#ff5d7a",
+          );
+        } else {
+          const cv = $("#chart-hr");
+          if (cv) {
+            const c = cv.getContext("2d");
+            c.clearRect(0, 0, cv.width, cv.height);
+            c.fillStyle = "#6b78a0";
+            c.font = "12px -apple-system";
+            c.fillText("No HR data in runs yet", 12, 24);
+          }
+        }
+        // weekly elevation (last 16)
+        const ek = Object.keys(elevWeeks).sort().slice(-16);
+        const hasElev = ek.some((k) => elevWeeks[k] > 0);
+        if (ek.length && hasElev) {
+          barChart(
+            "chart-elev",
+            ek.map((k) => Math.round(elevWeeks[k])),
+            ek.map((k) => k.slice(5)),
+            "#a78bfa",
+          );
+        } else {
+          const cv = $("#chart-elev");
+          if (cv) {
+            const c = cv.getContext("2d");
+            c.clearRect(0, 0, cv.width, cv.height);
+            c.fillStyle = "#6b78a0";
+            c.font = "12px -apple-system";
+            c.fillText("No elevation data in runs yet", 12, 24);
+          }
         }
       }
 
