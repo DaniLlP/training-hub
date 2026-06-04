@@ -6,10 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0f1a">
-<meta name="apple-mobile-web-app-title" content="PerfHub">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2338e1b0'/%3E%3Cstop offset='1' stop-color='%233aa0ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23g)'/%3E%3Ctext x='256' y='345' font-size='280' text-anchor='middle' font-family='Apple Color Emoji,Segoe UI Emoji,system-ui'%3E%F0%9F%8F%83%3C/text%3E%3C/svg%3E">
-<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Dani%20%C2%B7%20Performance%20Hub%22%2C%22short_name%22%3A%22PerfHub%22%2C%22description%22%3A%22HYROX%20%26%20Marathon%20Command%20Center%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230b0f1a%22%2C%22theme_color%22%3A%22%230b0f1a%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2338e1b0'/%3E%3Cstop offset='1' stop-color='%233aa0ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23g)'/%3E%3Ctext x='256' y='345' font-size='280' text-anchor='middle' font-family='Apple Color Emoji,Segoe UI Emoji,system-ui'%3E%F0%9F%8F%83%3C/text%3E%3C/svg%3E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
-
 <title>Dani · HYROX & Marathon Command Center</title>
 <style>
 :root{
@@ -59,15 +55,16 @@ header.hero::before{content:"";position:absolute;inset:0;
 .pill b{color:var(--txt)}
 
 /* Countdown */
-.countdowns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;position:relative;z-index:1}
+.countdowns{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;position:relative;z-index:1}
 .cd{border-radius:16px;padding:14px 16px;border:1px solid var(--line);position:relative;overflow:hidden}
 .cd.h{background:linear-gradient(135deg,rgba(255,176,32,.15),rgba(255,122,69,.05))}
 .cd.m{background:linear-gradient(135deg,rgba(255,93,122,.15),rgba(167,139,250,.05))}
+.cd.b{background:linear-gradient(135deg,rgba(56,225,176,.15),rgba(58,160,255,.05))}
 .cd .lab{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--mut)}
 .cd .big{font-size:30px;font-weight:800;margin-top:2px;line-height:1}
 .cd .lab2{font-size:12px;color:var(--mut);margin-top:4px}
 .cd .tgt{font-size:12.5px;margin-top:6px;font-weight:700}
-.cd.h .tgt{color:var(--hyrox)} .cd.m .tgt{color:var(--mara)}
+.cd.h .tgt{color:var(--hyrox)} .cd.m .tgt{color:var(--mara)} .cd.b .tgt{color:var(--acc)}
 
 /* Tabs */
 nav.tabs{position:sticky;top:0;z-index:50;background:rgba(11,15,26,.85);
@@ -203,53 +200,6 @@ td b{color:var(--txt)} .tdim{color:var(--mut)}
   transition:.3s;opacity:0;pointer-events:none;max-width:90%}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
-
-/* ── PWA Install Banner ── */
-#pwa-banner{
-  position:fixed;bottom:0;left:0;right:0;z-index:9999;
-  background:rgba(18,24,41,.96);
-  padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 14px);
-  display:none;align-items:center;gap:12px;
-  border-top:1px solid rgba(56,225,176,.3);
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  animation:pwa-up .4s cubic-bezier(.34,1.4,.64,1);
-}
-#pwa-banner.show{display:flex}
-@keyframes pwa-up{from{transform:translateY(120%)}to{transform:translateY(0)}}
-.pwa-ico{font-size:28px;flex:none;width:46px;height:46px;border-radius:13px;
-  background:linear-gradient(135deg,#38e1b0,#3aa0ff);
-  display:flex;align-items:center;justify-content:center;}
-.pwa-txt{flex:1;min-width:0}
-.pwa-t{font-weight:800;font-size:14px}
-.pwa-s{font-size:11.5px;color:#93a1c4;margin-top:1px}
-#pwa-add-btn{background:linear-gradient(135deg,#38e1b0,#3aa0ff);
-  border:none;border-radius:11px;padding:9px 15px;font-size:13px;font-weight:800;
-  color:#06210f;cursor:pointer;flex:none;white-space:nowrap}
-#pwa-dismiss{background:none;border:none;color:#6b78a0;font-size:22px;
-  cursor:pointer;padding:2px 4px;flex:none;line-height:1}
-/* iOS modal */
-#ios-modal{position:fixed;inset:0;z-index:10000;display:none;align-items:flex-end;
-  background:rgba(0,0,0,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-#ios-modal.show{display:flex}
-.ios-box{background:#1c2540;border-radius:22px 22px 0 0;
-  padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 22px);
-  width:100%;border-top:1px solid #26304f;
-  animation:pwa-up .35s cubic-bezier(.34,1.4,.64,1)}
-.ios-h{font-weight:800;font-size:18px;margin-bottom:4px}
-.ios-sub{font-size:13px;color:#93a1c4;margin-bottom:18px}
-.ios-step{display:flex;gap:13px;align-items:flex-start;margin-bottom:14px}
-.ios-n{width:27px;height:27px;border-radius:50%;
-  background:linear-gradient(135deg,#38e1b0,#3aa0ff);
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:800;color:#06210f;flex:none}
-.ios-t{font-size:13.5px;line-height:1.45}
-.ios-t b{color:#38e1b0}
-.ios-t em{color:#e9eef9;font-style:normal}
-#ios-close{width:100%;background:rgba(255,255,255,.07);border:1px solid #26304f;
-  color:#e9eef9;border-radius:14px;padding:14px;font-size:15px;font-weight:700;
-  cursor:pointer;margin-top:8px}
-
 footer{text-align:center;color:var(--mut2);font-size:11.5px;padding:24px 16px 10px}
 /* upload / health sync */
 .upbox{border:1.5px dashed var(--line);border-radius:16px;padding:22px 18px;text-align:center;background:var(--card);transition:.15s;cursor:pointer}
@@ -274,6 +224,31 @@ footer{text-align:center;color:var(--mut2);font-size:11.5px;padding:24px 16px 10
 .opt-tag{display:inline-block;font-size:10px;font-weight:800;color:var(--acc2);background:rgba(58,160,255,.13);
   border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:middle}
 .empty{text-align:center;color:var(--mut);padding:26px 10px;font-size:13.5px}
+/* performance tracker */
+.perf-hero{display:flex;flex-wrap:wrap;gap:12px}
+.perf-kpi{flex:1;min-width:140px;background:var(--card2);border-radius:14px;padding:13px 15px}
+.perf-kpi .pl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+.perf-kpi .pv{font-size:24px;font-weight:800;margin-top:3px;line-height:1.1}
+.perf-kpi .pd{font-size:11.5px;font-weight:700;margin-top:3px}
+.goalbar{background:var(--card2);border-radius:12px;padding:12px 14px;margin-top:10px}
+.goalbar .gt{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-bottom:8px}
+.goalbar .gt .gs{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px}
+.gtrack{height:9px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;position:relative}
+.gtrack>span{display:block;height:100%;border-radius:999px;transition:width .4s}
+.gmark{position:absolute;top:-3px;width:2px;height:15px;background:var(--txt);opacity:.55}
+.glabels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--mut2);margin-top:5px}
+.run-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.run-dot{width:38px;height:38px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--card2)}
+.run-row .rmeta{flex:1;min-width:0}
+.run-row .rt{font-size:13.5px;font-weight:700}
+.run-row .rs{font-size:11.5px;color:var(--mut);margin-top:1px}
+.run-row .rp{text-align:right;flex:none}
+.run-row .rp .pace{font-size:15px;font-weight:800}
+.run-row .rp .ptag{font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;margin-top:2px;display:inline-block}
+.seg-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.seg-tab{border:1px solid var(--line);background:var(--card2);color:var(--mut);font-size:12px;font-weight:700;
+  padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+.seg-tab.active{background:var(--acc);color:#06210f;border-color:var(--acc)}
 @media(max-width:640px){
   .g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}
   .hero h1{font-size:19px}.cd .big{font-size:26px}
@@ -309,6 +284,12 @@ footer{text-align:center;color:var(--mut2);font-size:11.5px;padding:24px 16px 10
         <div class="lab2">days to go · Nov 2026</div>
         <div class="tgt">🎯 Target: sub 60:00</div>
       </div>
+      <div class="cd b">
+        <div class="lab">🏃 Behobia–San Sebastián</div>
+        <div class="big"><span id="cd-b-days">–</span></div>
+        <div class="lab2">days to go · 20 km · Nov 2026</div>
+        <div class="tgt">🎯 Target: sub 1:15:00 (3:45/km)</div>
+      </div>
       <div class="cd m">
         <div class="lab">🏅 Barcelona Marathon</div>
         <div class="big"><span id="cd-m-days">–</span></div>
@@ -324,6 +305,7 @@ footer{text-align:center;color:var(--mut2);font-size:11.5px;padding:24px 16px 10
   <div class="wrap tabs-inner" id="tabbar">
     <button class="tab active" data-tab="dash">📊 Dashboard</button>
     <button class="tab" data-tab="week">📅 This Week</button>
+    <button class="tab" data-tab="perf">📈 Performance</button>
     <button class="tab" data-tab="roadmap">🗺️ Roadmap</button>
     <button class="tab" data-tab="hyrox">🔥 HYROX Plan</button>
     <button class="tab" data-tab="mara">🏅 Marathon Plan</button>
@@ -396,6 +378,44 @@ footer{text-align:center;color:var(--mut2);font-size:11.5px;padding:24px 16px 10
     </div>
     <div id="week-days"></div>
     <div class="note">💡 <b>Add to iPhone calendar:</b> tap <b>Add week to Calendar</b> (or <b>Add this day</b> on any card). On iPhone a new screen opens showing the sessions — tap <b>"Add All"</b> in the top corner to drop them into Apple Calendar (each has a 45-min alarm). <b>Do this in Safari</b>, not inside another app's browser. On a computer it downloads a normal <b>.ics</b> file you can open. If the screen is blank, tap the share icon → <b>Open in Calendar</b>.</div>
+  </section>
+
+  <!-- ===================== PERFORMANCE TRACKER ===================== -->
+  <section id="perf">
+    <h2 class="sec">📈 Performance Tracker <span class="muted" style="font-weight:400">· runs vs your goals</span></h2>
+    <div class="muted" style="margin-bottom:14px">Every time you load a fresh <b>export.zip</b> in 🔄 Health Sync, your running activities are pulled in and analysed here. It compares each run against your three race goals and shows whether you're trending toward them.</div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:800;font-size:15px;margin-bottom:10px">🎯 Goal trend</div>
+      <div id="perf-goals"></div>
+    </div>
+
+    <h3 class="blk">⚡ Snapshot <span class="muted" style="font-weight:400">· last 6 weeks</span></h3>
+    <div class="perf-hero" id="perf-snapshot"></div>
+
+    <div class="card" style="margin-top:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">🏃 Run pace trend (min/km)</div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:6px">quality runs only · lower = faster · goal lines shown</div>
+      <canvas id="chart-pace" height="160"></canvas>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">📏 Weekly running volume (km)</div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:6px">last 16 weeks · marathon build needs ~90–100 km peaks</div>
+      <canvas id="chart-weekly-km" height="160"></canvas>
+    </div>
+
+    <h3 class="blk">🧠 Coach read</h3>
+    <div class="card"><div id="perf-analysis"></div></div>
+
+    <h3 class="blk">📋 Recent runs <span class="muted" style="font-weight:400">· tap a filter</span></h3>
+    <div class="seg-tabs" id="run-filters">
+      <button class="seg-tab active" data-f="all">All</button>
+      <button class="seg-tab" data-f="quality">Quality / fast</button>
+      <button class="seg-tab" data-f="long">Long (≥18 km)</button>
+    </div>
+    <div class="card"><div id="perf-runs"></div></div>
+    <div class="note">💡 Pace tags compare each run to your goal paces: <b style="color:var(--acc)">🟢 at/under a goal</b>, <b style="color:var(--warn)">🟡 close</b>, <b style="color:var(--mut)">⚪ easy/recovery</b>. Easy runs are <i>meant</i> to be slow — they build the engine, so a grey tag there is good, not bad.</div>
   </section>
 
   <!-- ===================== ROADMAP ===================== -->
@@ -532,30 +552,119 @@ footer{text-align:center;color:var(--mut2);font-size:11.5px;padding:24px 16px 10
    Fully self-contained. Data parsed from Apple Health export.
    ============================================================ */
 
-/* ---------- HEALTH DATA (from export.zip · 3.2M records) ---------- */
+/* ---------- HEALTH DATA (parsed from your export.zip · Jun 2026) ---------- */
 const HEALTH = {
-  vo2:{latest:59.4, peak:60.3, peakMonth:"Feb 2026",
-    series:[["S24",50.9],["O24",52.1],["N24",54.9],["D24",54.1],["J25",51.0],["F25",53.3],["M25",52.9],["A25",50.7],["M25",51.9],["J25",54.9],["J25",55.8],["A25",53.3],["S25",57.4],["O25",57.3],["N25",57.7],["D25",56.6],["J26",58.4],["F26",59.0],["M26",51.5],["A26",53.4],["M26",58.6]]},
-  rhr:{latest:48, avg:52, series:[47.8,49.0,49.5,53.1,53.6,50.2,53.0,55.8,50.8,51.3,52.0,52.7,52.1,52.2,50.8,51.7,55.1,56.7,56.0,54.9,51.6]},
-  hrv:{latest:61, avg:60, series:[70.7,65.9,65.0,55.0,56.5,68.0,60.2,58.7,61.8,61.7,61.2,59.9,60.9,62.5,60.6,60.2,52.2,53.5,52.2,58.1,62.8]},
+  vo2:{latest:59.2, peak:59.2, peakMonth:"Jun 2026",
+    series:[["O24",52.1],["N24",54.9],["D24",54.1],["J25",51.0],["F25",53.3],["M25",52.9],["A25",50.7],["M25",51.9],["J25",54.9],["J25",55.8],["A25",53.3],["S25",57.4],["O25",57.3],["N25",57.7],["D25",56.6],["J26",58.4],["F26",59.0],["M26",51.5],["A26",53.4],["M26",58.6],["J26",59.2]]},
+  rhr:{latest:43, avg:52, series:[54.0,50.0,52.0,50.0,55.0,51.0,53.0,48.0,47.0,57.0,58.0,51.0,53.0,52.0,49.0,59.0,49.0,52.0,50.0,53.0,43.0]},
+  hrv:{latest:33, avg:55, series:[35.9,82.6,35.7,27.2,36.0,57.7,110.9,60.1,59.6,63.5,60.4,48.8,37.5,100.4,49.6,31.9,36.3,90.1,77.1,122.3,33.2]},
   mass:{latest:70.2, bmi:22.7, bf:19},
-  spo2:97, resp:16.6, restHRmin:42, hrMaxObs:202,
-  volume:[["J25",21],["F25",24],["M25",18],["A25",8],["M25",30],["J25",21],["J25",18],["A25",15],["S25",28],["O25",29],["N25",27],["D25",30],["J26",27],["F26",12],["M26",3],["A26",25],["M26",31]],
-  workoutMix:{"Strength / Bootcamp":230,"HIIT":81,"Running":71,"Skiing":14,"Walking":14,"Cycling":7},
-  totalWorkouts:425
+  spo2:98, resp:16.9, restHRmin:42, hrMaxObs:202,
+  volume:[["F25",24],["M25",18],["A25",8],["M25",30],["J25",21],["J25",18],["A25",15],["S25",28],["O25",29],["N25",27],["D25",30],["J26",27],["F26",12],["M26",3],["A26",25],["M26",31],["J26",4]],
+  workoutMix:{"Strength / Bootcamp":230,"HIIT":83,"Running":73,"Skiing":14,"Walking":14,"Cycling":7},
+  totalWorkouts:429
 };
 
-/* ---------- SLEEP DATA (populated from export; baseline sample below) ----------
+/* ---------- SLEEP DATA (parsed from your export; updated on each sync) ----------
    series = hours per night (oldest→newest). Updated by the Health Sync parser. */
 const SLEEP = {
-  avg:7.1, series:[7.4,6.9,7.8,7.1,6.6,7.9,8.1,7.0,6.8,7.5,7.2,6.4,7.7,8.0,7.3,6.9,7.1,7.6,6.7,7.4,7.8,7.0,6.5,7.9,7.3,7.2,6.8,7.6,7.4,7.0],
-  source:"baseline"
+  avg:7.16, series:[5.86,7.24,7.27,7.55,7.41,7.9,6.98,6.8,6.42,7.39,8.59,8.64,8.26,6.14,7.15,5.59,6.94,8.11,6.98,9.32,6.13,8.33,7.8,4.64,7.2,6.29,6.28,7.32,7.2,7.0],
+  source:"export"
 };
+
+/* ---------- RUNNING ACTIVITIES (parsed from your export; updated on each sync) ----------
+   Each: {date:'YYYY-MM-DD', dur:minutes, km:distance, pace:min/km}. Drives the
+   Performance Tracker tab. Replaced wholesale when you load a fresh export.zip. */
+let RUNS = [
+  {date:"2024-09-06",dur:80.0,km:16.04,pace:4.99},
+  {date:"2024-09-11",dur:41.4,km:9.2,pace:4.5},
+  {date:"2024-09-30",dur:66.6,km:13.71,pace:4.86},
+  {date:"2024-11-23",dur:24.4,km:6.06,pace:4.03},
+  {date:"2025-01-25",dur:46.1,km:10.03,pace:4.6},
+  {date:"2025-02-11",dur:104.7,km:8.88,pace:11.79},
+  {date:"2025-02-23",dur:14.6,km:3.11,pace:4.69},
+  {date:"2025-02-23",dur:8.4,km:1.83,pace:4.59},
+  {date:"2025-02-23",dur:118.5,km:26.17,pace:4.53},
+  {date:"2025-03-16",dur:192.6,km:42.34,pace:4.55},
+  {date:"2025-04-28",dur:33.5,km:8.03,pace:4.17},
+  {date:"2025-05-03",dur:116.6,km:18.32,pace:6.36},
+  {date:"2025-05-08",dur:73.3,km:11.53,pace:6.36},
+  {date:"2025-05-15",dur:74.8,km:11.8,pace:6.34},
+  {date:"2025-05-22",dur:69.0,km:11.52,pace:5.99},
+  {date:"2025-05-29",dur:77.2,km:11.7,pace:6.6},
+  {date:"2025-06-13",dur:279.2,km:36.26,pace:7.7},
+  {date:"2025-06-23",dur:45.8,km:10.07,pace:4.55},
+  {date:"2025-07-03",dur:85.2,km:11.74,pace:7.26},
+  {date:"2025-07-14",dur:7.4,km:0.86,pace:8.6},
+  {date:"2025-08-16",dur:70.4,km:14.29,pace:4.93},
+  {date:"2025-08-18",dur:57.0,km:8.22,pace:6.93},
+  {date:"2025-08-23",dur:56.2,km:8.98,pace:6.26},
+  {date:"2025-08-31",dur:52.8,km:11.43,pace:4.62},
+  {date:"2025-09-11",dur:73.5,km:11.44,pace:6.42},
+  {date:"2025-09-15",dur:57.3,km:8.12,pace:7.06},
+  {date:"2025-09-20",dur:128.2,km:19.61,pace:6.54},
+  {date:"2025-09-27",dur:47.8,km:6.45,pace:7.41},
+  {date:"2025-10-16",dur:79.6,km:11.58,pace:6.87},
+  {date:"2025-10-23",dur:84.6,km:11.56,pace:7.32},
+  {date:"2025-10-25",dur:117.3,km:19.23,pace:6.1},
+  {date:"2025-10-30",dur:52.7,km:7.94,pace:6.64},
+  {date:"2025-11-02",dur:5.5,km:0.72,pace:7.64},
+  {date:"2025-11-04",dur:40.8,km:8.78,pace:4.65},
+  {date:"2025-11-08",dur:42.3,km:6.65,pace:6.36},
+  {date:"2025-11-09",dur:79.4,km:19.82,pace:4.01},
+  {date:"2025-11-13",dur:73.5,km:15.05,pace:4.88},
+  {date:"2025-11-16",dur:104.6,km:18.82,pace:5.56},
+  {date:"2025-11-23",dur:115.9,km:21.66,pace:5.35},
+  {date:"2025-12-04",dur:53.7,km:9.11,pace:5.89},
+  {date:"2025-12-07",dur:80.8,km:15.54,pace:5.2},
+  {date:"2025-12-07",dur:85.2,km:16.13,pace:5.28},
+  {date:"2025-12-08",dur:94.4,km:16.09,pace:5.87},
+  {date:"2025-12-08",dur:81.3,km:15.1,pace:5.38},
+  {date:"2025-12-11",dur:72.5,km:12.35,pace:5.87},
+  {date:"2025-12-14",dur:8.4,km:1.9,pace:4.42},
+  {date:"2025-12-14",dur:104.8,km:21.14,pace:4.96},
+  {date:"2025-12-15",dur:107.6,km:21.17,pace:5.08},
+  {date:"2025-12-17",dur:17.8,km:3.89,pace:4.58},
+  {date:"2025-12-17",dur:106.6,km:21.11,pace:5.05},
+  {date:"2025-12-19",dur:113.6,km:22.36,pace:5.08},
+  {date:"2025-12-20",dur:11.1,km:1.29,pace:8.6},
+  {date:"2025-12-20",dur:122.1,km:21.75,pace:5.61},
+  {date:"2025-12-26",dur:49.8,km:10.27,pace:4.85},
+  {date:"2026-01-11",dur:60.1,km:11.18,pace:5.38},
+  {date:"2026-01-18",dur:77.5,km:14.18,pace:5.47},
+  {date:"2026-01-25",dur:144.4,km:30.06,pace:4.8},
+  {date:"2026-01-28",dur:76.0,km:15.67,pace:4.85},
+  {date:"2026-01-31",dur:114.0,km:19.26,pace:5.92},
+  {date:"2026-03-26",dur:23.2,km:5.02,pace:4.62},
+  {date:"2026-03-31",dur:51.0,km:10.06,pace:5.07},
+  {date:"2026-04-18",dur:60.1,km:10.25,pace:5.86},
+  {date:"2026-05-01",dur:48.9,km:10.63,pace:4.6},
+  {date:"2026-05-21",dur:63.0,km:11.43,pace:5.51},
+  {date:"2026-05-24",dur:104.2,km:21.12,pace:4.93},
+  {date:"2026-05-25",dur:51.3,km:9.99,pace:5.14},
+  {date:"2026-05-30",dur:85.2,km:14.02,pace:6.08},
+  {date:"2026-06-01",dur:60.2,km:10.52,pace:5.72},
+  {date:"2026-06-04",dur:45.5,km:9.44,pace:4.82}
+];
 
 /* ---------- ATHLETE / GOALS ---------- */
 const ATHLETE = {name:"Dani", age:33, h:176, w:71, restHR:48,
   maxHR:187, // observed workout peak, conservative vs 202 outlier
-  hyroxDate:"2026-11-14", maraDate:"2027-03-15"};
+  hyroxDate:"2026-11-14", behobiaDate:"2026-11-08", maraDate:"2027-03-15"};
+
+/* ---------- RACE GOALS (drive the Performance Tracker) ----------
+   goalPace = target min/km. dist = km. */
+const GOALS = [
+  {key:"behobia", e:"🏃", name:"Behobia–San Sebastián", dist:20, time:"1:15:00", goalPace:3.75,
+   date:ATHLETE.behobiaDate, color:"var(--acc)",
+   note:"20 km @ 3:45/km. A fast, rolling classic — your sharpening race before HYROX."},
+  {key:"hyrox", e:"🔥", name:"HYROX Open", dist:8, time:"60:00", goalPace:4.92,
+   date:ATHLETE.hyroxDate, color:"var(--hyrox)",
+   note:"8×1 km runs must average ~4:45–5:00/km under station fatigue."},
+  {key:"mara", e:"🏅", name:"Barcelona Marathon", dist:42.2, time:"2:45:00", goalPace:3.9,
+   date:ATHLETE.maraDate, color:"var(--mara)",
+   note:"42.2 km @ 3:54/km. Won on durability + high weekly volume."}
+];
 
 /* ---------- METRIC CARDS ---------- */
 function buildMetrics(){ return [
@@ -1024,6 +1133,7 @@ $$(".tab").forEach(b=>b.addEventListener("click",()=>{
 /* ---------- COUNTDOWNS ---------- */
 function daysTo(d){const ms=new Date(d+"T08:00:00")-new Date();return Math.max(0,Math.ceil(ms/864e5));}
 $("#cd-h-days").textContent=daysTo(ATHLETE.hyroxDate);
+$("#cd-b-days").textContent=daysTo(ATHLETE.behobiaDate);
 $("#cd-m-days").textContent=daysTo(ATHLETE.maraDate);
 $("#p-vo2").textContent=HEALTH.vo2.latest;
 $("#p-rhr").textContent=HEALTH.rhr.latest;
@@ -1784,120 +1894,6 @@ window.addEventListener("resize",()=>{
   if(SLEEP.series&&SLEEP.series.length){const s=SLEEP.series.slice(-30);lineChart("chart-sleep",s,s.map((_,i)=>"-"+(s.length-i)),"#a78bfa");}
 });
 init();
-
-/* ============================================================
-   PWA - Service Worker (Blob) + Install Prompt
-   ============================================================ */
-(function(){
-  var swSrc = [
-    "const CACHE='dani-perf-v1';",
-    "self.addEventListener('install',ev=>{",
-    "  ev.waitUntil(caches.open(CACHE).then(c=>c.add(self.location.href.split('?')[0])).then(()=>self.skipWaiting()));",
-    "});",
-    "self.addEventListener('activate',ev=>{",
-    "  ev.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));",
-    "});",
-    "self.addEventListener('fetch',ev=>{",
-    "  if(ev.request.method!=='GET')return;",
-    "  ev.respondWith(caches.match(ev.request).then(cached=>{",
-    "    if(cached)return cached;",
-    "    return fetch(ev.request).then(res=>{",
-    "      if(res&&res.status===200&&res.type==='basic'){const cl=res.clone();caches.open(CACHE).then(c=>c.put(ev.request,cl));}",
-    "      return res;",
-    "    }).catch(()=>cached);",
-    "  }));",
-    "});"
-  ].join('\n');
-
-  if('serviceWorker' in navigator){
-    var blob=new Blob([swSrc],{type:'application/javascript'});
-    var url=URL.createObjectURL(blob);
-    navigator.serviceWorker.register(url,{scope:'./'})
-      .then(function(r){console.log('[PWA] SW ok',r.scope);})
-      .catch(function(e){console.warn('[PWA] SW err',e);});
-  }
-
-  var ua=navigator.userAgent;
-  var isIOS=/iP(hone|ad|od)/.test(ua)&&!window.MSStream;
-  var isSafari=/^((?!chrome|android).)*safari/i.test(ua);
-  var isInApp=isIOS&&!isSafari;
-  var standalone=window.matchMedia('(display-mode:standalone)').matches||!!navigator.standalone;
-  var snooze=sessionStorage.getItem('pwa_snoozed');
-
-  var banner=document.getElementById('pwa-banner');
-  var addBtn=document.getElementById('pwa-add-btn');
-  var dimBtn=document.getElementById('pwa-dismiss');
-  var modal=document.getElementById('ios-modal');
-  var closeBtn=document.getElementById('ios-close');
-
-  function showBanner(){banner.classList.add('show');}
-  function hideBanner(){banner.classList.remove('show');sessionStorage.setItem('pwa_snoozed','1');}
-
-  if(!standalone&&!snooze){
-    var deferred=null;
-    window.addEventListener('beforeinstallprompt',function(e){
-      e.preventDefault();deferred=e;setTimeout(showBanner,2500);
-    });
-    addBtn.addEventListener('click',function(){
-      if(deferred){
-        deferred.prompt();
-        deferred.userChoice.then(function(c){
-          deferred=null;hideBanner();
-          if(c.outcome==='accepted')toast('\u2705 App installed! Check your home screen.');
-        });
-      } else if(isIOS&&isSafari){hideBanner();modal.classList.add('show');}
-      else if(isInApp){toast('Open this page in Safari to install');hideBanner();}
-      else{hideBanner();modal.classList.add('show');}
-    });
-    if(isIOS&&isSafari){setTimeout(showBanner,2500);}
-    if(isInApp){setTimeout(function(){showBanner();addBtn.textContent='Open in Safari';},3000);}
-  }
-
-  dimBtn.addEventListener('click',hideBanner);
-  closeBtn.addEventListener('click',function(){modal.classList.remove('show');});
-  modal.addEventListener('click',function(e){if(e.target===modal)modal.classList.remove('show');});
-  window.matchMedia('(display-mode:standalone)').addEventListener('change',function(e){
-    if(e.matches)banner.classList.remove('show');
-  });
-})();
-
 </script>
-
-<!-- PWA Banner -->
-<div id="pwa-banner">
-  <div class="pwa-ico">🏃‍♂️</div>
-  <div class="pwa-txt">
-    <div class="pwa-t">Add to Home Screen</div>
-    <div class="pwa-s">Works offline · Full-screen · No App Store</div>
-  </div>
-  <button id="pwa-add-btn">Install</button>
-  <button id="pwa-dismiss">✕</button>
-</div>
-
-<!-- iOS Instructions Modal -->
-<div id="ios-modal">
-  <div class="ios-box">
-    <div class="ios-h">📲 Install on your iPhone</div>
-    <div class="ios-sub">This app must be opened in <em>Safari</em> to install. Then:</div>
-    <div class="ios-step">
-      <div class="ios-n">1</div>
-      <div class="ios-t">Tap the <b>Share icon</b> <em>⎋</em> at the bottom of Safari</div>
-    </div>
-    <div class="ios-step">
-      <div class="ios-n">2</div>
-      <div class="ios-t">Scroll down and tap <b>"Add to Home Screen"</b></div>
-    </div>
-    <div class="ios-step">
-      <div class="ios-n">3</div>
-      <div class="ios-t">Tap <b>"Add"</b> in the top-right corner</div>
-    </div>
-    <div class="ios-step">
-      <div class="ios-n">✓</div>
-      <div class="ios-t"><em>Done!</em> The app opens full-screen with no browser chrome, and works offline.</div>
-    </div>
-    <button id="ios-close">Got it ✓</button>
-  </div>
-</div>
-
 </body>
 </html>
