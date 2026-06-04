@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0b0f1a" />
+    <title>Health → JSON Converter</title>
+    <style>
+      :root {
+        --bg: #0b0f1a;
+        --card: #161d33;
+        --card2: #1c2540;
+        --line: #26304f;
+        --txt: #e9eef9;
+        --mut: #93a1c4;
+        --acc: #38e1b0;
+        --acc2: #3aa0ff;
+        --good: #36d399;
+        --bad: #f87272;
+        --warn: #fbbd23;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--txt);
+        line-height: 1.5;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
+          Roboto, Helvetica, Arial, sans-serif;
+        padding: calc(env(safe-area-inset-top) + 18px) 16px 60px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 21px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--mut);
+        font-size: 13px;
+        margin-bottom: 18px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+      .step {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin: 10px 0;
+      }
+      .n {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 800;
+        color: #06210f;
+        background: linear-gradient(135deg, #38e1b0, #3aa0ff);
+      }
+      .step .t {
+        font-size: 13.5px;
+      }
+      .upbox {
+        border: 1.6px dashed var(--line);
+        border-radius: 16px;
+        padding: 26px 18px;
+        text-align: center;
+        background: var(--card2);
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .upbox.drag {
+        border-color: var(--acc);
+        background: rgba(56, 225, 176, 0.08);
+      }
+      .upbox .ic {
+        font-size: 38px;
+      }
+      .upbox .tt {
+        font-weight: 800;
+        font-size: 15px;
+        margin-top: 8px;
+      }
+      .upbox .hh {
+        font-size: 12.5px;
+        color: var(--mut);
+        margin-top: 4px;
+      }
+      .fileinput {
+        display: none;
+      }
+      .prog {
+        height: 10px;
+        background: var(--card2);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 16px;
+        display: none;
+      }
+      .prog.on {
+        display: block;
+      }
+      .prog > span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(135deg, #38e1b0, #3aa0ff);
+        transition: width 0.2s;
+      }
+      .lbl {
+        font-size: 12.5px;
+        color: var(--mut);
+        margin-top: 8px;
+        min-height: 16px;
+        text-align: center;
+      }
+      .btn {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        color: #06210f;
+        background: var(--acc);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn.blue {
+        background: var(--acc2);
+        color: #04223f;
+      }
+      .btn.ghost {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--txt);
+        border: 1px solid var(--line);
+      }
+      .btn:active {
+        transform: scale(0.97);
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 10px;
+        margin-top: 6px;
+      }
+      .kpi {
+        background: var(--card2);
+        border-radius: 12px;
+        padding: 11px 13px;
+      }
+      .kpi .l {
+        font-size: 11px;
+        color: var(--mut);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .kpi .v {
+        font-size: 19px;
+        font-weight: 800;
+        margin-top: 3px;
+      }
+      textarea {
+        width: 100%;
+        height: 130px;
+        margin-top: 12px;
+        background: #0d1322;
+        color: var(--mut);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 11px;
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      .ok {
+        color: var(--good);
+      }
+      .err {
+        color: var(--bad);
+      }
+      .note {
+        background: rgba(58, 160, 255, 0.07);
+        border: 1px solid rgba(58, 160, 255, 0.25);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 12.5px;
+        color: var(--mut);
+        margin-top: 6px;
+      }
+      .note b {
+        color: var(--txt);
+      }
+      a {
+        color: var(--acc2);
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>🩺 → 📄 Health Data Converter</h1>
+      <div class="sub">
+        Turns your big Apple Health <b>export.zip</b> into the tiny
+        <b>health_data.json</b> your dashboard reads. Runs entirely on this
+        device — nothing is uploaded.
+      </div>
+
+      <div class="card">
+        <div class="step">
+          <div class="n">1</div>
+          <div class="t">
+            In the <b>Health</b> app: tap your photo →
+            <b>Export All Health Data</b> → save the <b>export.zip</b> to
+            <b>Files</b>.
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <div class="t">
+            Tap the box below and pick that <b>export.zip</b>.
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">3</div>
+          <div class="t">
+            When it finishes, tap <b>Copy JSON</b> (or Save) and paste it into
+            <b>health_data.json</b> on GitHub.
+          </div>
+        </div>
+      </div>
+
+      <label class="upbox" id="upbox" for="file">
+        <div class="ic">📦</div>
+        <div class="tt">Tap to choose <b>export.zip</b></div>
+        <div class="hh">Apple Health export · .zip (or export.xml)</div>
+        <input class="fileinput" type="file" id="file" accept=".zip,.xml" />
+      </label>
+      <div class="prog" id="prog"><span></span></div>
+      <div class="lbl" id="lbl"></div>
+
+      <div class="card hidden" id="result">
+        <div style="font-weight: 800; font-size: 15px; margin-bottom: 8px">
+          ✅ Done — <span id="asof"></span>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div class="row">
+          <button class="btn" id="copy">📋 Copy JSON</button>
+          <button class="btn blue" id="save">💾 Save / Share file</button>
+          <button class="btn ghost" id="toggle">👁️ Show JSON</button>
+        </div>
+        <textarea id="json" class="hidden" readonly></textarea>
+        <div class="note" style="margin-top: 14px">
+          <b>To update GitHub from your phone:</b> open your repo → tap
+          <b>health_data.json</b> → ✏️ edit → select all → paste →
+          <b>Commit</b>. Then open your dashboard and tap
+          <b>Load latest from GitHub</b> (or just reload).
+        </div>
+      </div>
+
+      <div class="note" id="hint">
+        💡 Big exports (3M+ records) are processed in small pieces so this won't
+        crash — it may take 20–90s on a phone. Keep this screen open while the
+        bar fills.
+      </div>
+    </div>
+
+    <script>
+      const $ = (s) => document.querySelector(s);
+      const pad = (n) => String(n).padStart(2, "0");
+      const attr = (tag, name) => {
+        const m = new RegExp(name + '="([^"]*)"').exec(tag);
+        return m ? m[1] : null;
+      };
+      const MONTHS = "JFMAMJJASOND";
+      const monthKey = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1);
+      const monthLbl = (k) => {
+        const [y, m] = k.split("-");
+        return MONTHS[+m - 1] + y.slice(2);
+      };
+
+      /* Apple date "2026-06-04 07:12:33 +0200" → Date */
+      function appleDate(s) {
+        if (!s) return null;
+        const m =
+          /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})\s*([+-]\d{2})(\d{2})?/.exec(
+            s,
+          );
+        if (m) {
+          const iso = m[1] + "T" + m[2] + m[3] + ":" + (m[4] || "00");
+          const d = new Date(iso);
+          if (!isNaN(d)) return d;
+        }
+        const d2 = new Date(s);
+        return isNaN(d2) ? null : d2;
+      }
+
+      function setProg(p, msg) {
+        const bar = $("#prog");
+        bar.classList.add("on");
+        bar.firstElementChild.style.width = Math.round(p * 100) + "%";
+        $("#lbl").textContent = msg || "";
+      }
+
+      /* ---- locate export.xml compressed bytes inside the zip ---- */
+      function locateZipEntry(buf, wantRe) {
+        const dv = new DataView(buf.buffer);
+        const dec = new TextDecoder();
+        let i = 0;
+        while (i + 30 <= buf.length) {
+          if (dv.getUint32(i, true) !== 0x04034b50) break;
+          const method = dv.getUint16(i + 8, true);
+          const compSize = dv.getUint32(i + 18, true);
+          const nameLen = dv.getUint16(i + 26, true);
+          const extraLen = dv.getUint16(i + 28, true);
+          const name = dec.decode(buf.subarray(i + 30, i + 30 + nameLen));
+          const dataStart = i + 30 + nameLen + extraLen;
+          if (compSize === 0) break;
+          if (wantRe.test(name))
+            return {
+              bytes: buf.subarray(dataStart, dataStart + compSize),
+              method,
+            };
+          i = dataStart + compSize;
+        }
+        let eo = -1;
+        for (
+          let p = buf.length - 22;
+          p >= 0 && p > buf.length - 22 - 65557;
+          p--
+        ) {
+          if (dv.getUint32(p, true) === 0x06054b50) {
+            eo = p;
+            break;
+          }
+        }
+        if (eo < 0)
+          throw new Error("Not a valid .zip. Try the export.xml inside it.");
+        let cd = dv.getUint32(eo + 16, true);
+        const total = dv.getUint16(eo + 10, true);
+        for (let k = 0; k < total; k++) {
+          if (dv.getUint32(cd, true) !== 0x02014b50) break;
+          const method = dv.getUint16(cd + 10, true);
+          const compSize = dv.getUint32(cd + 20, true);
+          const nameLen = dv.getUint16(cd + 28, true);
+          const extraLen = dv.getUint16(cd + 30, true);
+          const commLen = dv.getUint16(cd + 32, true);
+          const lho = dv.getUint32(cd + 42, true);
+          const name = dec.decode(buf.subarray(cd + 46, cd + 46 + nameLen));
+          if (wantRe.test(name)) {
+            const lnl = dv.getUint16(lho + 26, true),
+              lel = dv.getUint16(lho + 28, true);
+            const start = lho + 30 + lnl + lel;
+            return { bytes: buf.subarray(start, start + compSize), method };
+          }
+          cd += 46 + nameLen + extraLen + commLen;
+        }
+        throw new Error("export.xml not found in the zip.");
+      }
+
+      /* ---- streaming aggregator: feed chunks, keep only tiny totals ---- */
+      function makeAggregator() {
+        const vo2 = [],
+          rhr = [],
+          hrv = [],
+          bm = [];
+        let ox = [],
+          rr = [];
+        const volByM = {};
+        let totalWorkouts = 0;
+        const runs = [];
+        const sleepByNight = {};
+        const tagRe = /<(Record|Workout)\b[^>]*>/g;
+        function feed(text) {
+          let m;
+          while ((m = tagRe.exec(text))) {
+            const tag = m[0];
+            if (m[1] === "Record") {
+              const type = attr(tag, "type");
+              if (!type) continue;
+              if (type === "HKQuantityTypeIdentifierVO2Max") {
+                const v = parseFloat(attr(tag, "value")),
+                  d = appleDate(attr(tag, "startDate"));
+                if (v && d) vo2.push({ d, v });
+              } else if (type === "HKQuantityTypeIdentifierRestingHeartRate") {
+                const v = parseFloat(attr(tag, "value")),
+                  d = appleDate(attr(tag, "startDate"));
+                if (v && d) rhr.push({ d, v });
+              } else if (
+                type === "HKQuantityTypeIdentifierHeartRateVariabilitySDNN"
+              ) {
+                const v = parseFloat(attr(tag, "value")),
+                  d = appleDate(attr(tag, "startDate"));
+                if (v && d) hrv.push({ d, v });
+              } else if (type === "HKQuantityTypeIdentifierBodyMass") {
+                const v = parseFloat(attr(tag, "value")),
+                  d = appleDate(attr(tag, "startDate"));
+                if (v && d) bm.push({ d, v });
+              } else if (type === "HKQuantityTypeIdentifierOxygenSaturation") {
+                const v = parseFloat(attr(tag, "value"));
+                if (v) {
+                  ox.push(v);
+                  if (ox.length > 400) ox = ox.slice(-200);
+                }
+              } else if (type === "HKQuantityTypeIdentifierRespiratoryRate") {
+                const v = parseFloat(attr(tag, "value"));
+                if (v) {
+                  rr.push(v);
+                  if (rr.length > 400) rr = rr.slice(-200);
+                }
+              } else if (type === "HKCategoryTypeIdentifierSleepAnalysis") {
+                const val = attr(tag, "value") || "";
+                const sd = appleDate(attr(tag, "startDate")),
+                  ed = appleDate(attr(tag, "endDate"));
+                if (sd && ed && /Asleep/i.test(val)) {
+                  const hrs = (ed - sd) / 36e5;
+                  if (hrs > 0 && hrs < 14) {
+                    const key =
+                      ed.getFullYear() +
+                      "-" +
+                      pad(ed.getMonth() + 1) +
+                      "-" +
+                      pad(ed.getDate());
+                    sleepByNight[key] = (sleepByNight[key] || 0) + hrs;
+                  }
+                }
+              }
+            } else {
+              const d = appleDate(attr(tag, "startDate"));
+              if (!d) continue;
+              totalWorkouts++;
+              volByM[monthKey(d)] = (volByM[monthKey(d)] || 0) + 1;
+              const act = attr(tag, "workoutActivityType") || "";
+              if (/Running/i.test(act)) {
+                let dur = parseFloat(attr(tag, "duration") || "0");
+                const du = (attr(tag, "durationUnit") || "min").toLowerCase();
+                if (du[0] === "s") dur /= 60;
+                else if (du[0] === "h") dur *= 60;
+                let km = parseFloat(attr(tag, "totalDistance") || "0");
+                const ku = (
+                  attr(tag, "totalDistanceUnit") || "km"
+                ).toLowerCase();
+                if (ku === "mi") km *= 1.60934;
+                else if (ku === "m") km /= 1000;
+                if (km > 0.3 && dur > 0) {
+                  const pace = dur / km;
+                  if (pace >= 2 && pace <= 20)
+                    runs.push({
+                      date:
+                        d.getFullYear() +
+                        "-" +
+                        pad(d.getMonth() + 1) +
+                        "-" +
+                        pad(d.getDate()),
+                      dur: +dur.toFixed(1),
+                      km: +km.toFixed(2),
+                      pace: +pace.toFixed(2),
+                    });
+                }
+              }
+            }
+          }
+          tagRe.lastIndex = 0;
+        }
+        function finish() {
+          const out = {};
+          const by = (a, b) => a.d - b.d;
+          if (vo2.length) {
+            vo2.sort(by);
+            out.vo2Latest = +vo2[vo2.length - 1].v.toFixed(1);
+            const bM = {};
+            vo2.forEach((r) => {
+              (bM[monthKey(r.d)] ??= []).push(r.v);
+            });
+            const ks = Object.keys(bM).sort().slice(-21);
+            out.vo2Series = ks.map((k) => [
+              monthLbl(k),
+              +(bM[k].reduce((a, b) => a + b, 0) / bM[k].length).toFixed(1),
+            ]);
+          }
+          if (rhr.length) {
+            rhr.sort(by);
+            out.rhrLatest = Math.round(rhr[rhr.length - 1].v);
+            out.rhrSeries = rhr.slice(-21).map((r) => +r.v.toFixed(1));
+          }
+          if (hrv.length) {
+            hrv.sort(by);
+            const ms = (v) => (v < 5 ? v * 1000 : v);
+            out.hrvLatest = Math.round(ms(hrv[hrv.length - 1].v));
+            out.hrvSeries = hrv.slice(-21).map((r) => +ms(r.v).toFixed(1));
+          }
+          if (bm.length) {
+            bm.sort(by);
+            out.massLatest = +bm[bm.length - 1].v.toFixed(1);
+          }
+          if (ox.length) {
+            const l = ox.slice(-30);
+            out.spo2 = Math.round(
+              (l.reduce((a, b) => a + b, 0) / l.length) *
+                (ox[0] <= 1 ? 100 : 1),
+            );
+          }
+          if (rr.length) {
+            const l = rr.slice(-30);
+            out.resp = +(l.reduce((a, b) => a + b, 0) / l.length).toFixed(1);
+          }
+          if (totalWorkouts) {
+            out.totalWorkouts = totalWorkouts;
+            const ks = Object.keys(volByM).sort().slice(-17);
+            out.volume = ks.map((k) => [monthLbl(k), volByM[k]]);
+          }
+          const nights = Object.keys(sleepByNight).sort();
+          const series = nights
+            .map((k) => +sleepByNight[k].toFixed(2))
+            .filter((h) => h >= 2 && h <= 14);
+          if (series.length) {
+            out.sleepSeries = series.slice(-30);
+            out.sleepAvg = +(
+              out.sleepSeries.reduce((a, b) => a + b, 0) /
+              out.sleepSeries.length
+            ).toFixed(2);
+          }
+          if (runs.length) {
+            runs.sort((a, b) => (a.date < b.date ? -1 : 1));
+            out.runs = runs;
+          }
+          const cands = [];
+          if (runs.length) cands.push(runs[runs.length - 1].date);
+          if (nights.length) cands.push(nights[nights.length - 1]);
+          if (cands.length) out.asOf = cands.sort().pop();
+          out.generated = new Date()
+            .toISOString()
+            .slice(0, 16)
+            .replace("T", " ");
+          return out;
+        }
+        return { feed, finish };
+      }
+
+      async function convert(file) {
+        $("#result").classList.add("hidden");
+        $("#hint").classList.add("hidden");
+        const name = (file.name || "").toLowerCase();
+        setProg(0.04, "Reading " + file.name + " …");
+        let byteStream, approx;
+        if (name.endsWith(".xml")) {
+          byteStream = file.stream
+            ? file.stream()
+            : (await new Response(file)).body;
+          approx = file.size || 1;
+        } else {
+          setProg(0.1, "Opening the zip …");
+          const buf = new Uint8Array(await file.arrayBuffer());
+          const loc = locateZipEntry(buf, /(^|\/)export\.xml$/i);
+          const blob = new Blob([loc.bytes]);
+          const base = blob.stream
+            ? blob.stream()
+            : (await new Response(blob)).body;
+          if (loc.method === 0) {
+            byteStream = base;
+            approx = loc.bytes.length;
+          } else {
+            if (typeof DecompressionStream === "undefined")
+              throw new Error(
+                "This browser can't unzip. Use a computer, or AirDrop the export.xml.",
+              );
+            byteStream = base.pipeThrough(
+              new DecompressionStream("deflate-raw"),
+            );
+            approx = loc.bytes.length * 12;
+          }
+        }
+        const reader = byteStream.getReader();
+        const dec = new TextDecoder("utf-8");
+        const agg = makeAggregator();
+        let carry = "",
+          read = 0,
+          n = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          read += value.length;
+          const text = carry + dec.decode(value, { stream: true });
+          const cut = text.lastIndexOf(">");
+          if (cut < 0) {
+            carry = text;
+            continue;
+          }
+          agg.feed(text.slice(0, cut + 1));
+          carry = text.slice(cut + 1);
+          setProg(
+            0.15 + 0.75 * Math.min(1, read / (approx || 1)),
+            "Reading health data … " + Math.round(read / 1e6) + " MB",
+          );
+          if ((++n & 3) === 0) await new Promise((r) => setTimeout(r, 0));
+        }
+        if (carry) agg.feed(carry);
+        setProg(0.98, "Building JSON …");
+        const data = agg.finish();
+        showResult(data);
+        setProg(1, "✅ Done!");
+        setTimeout(() => $("#prog").classList.remove("on"), 900);
+      }
+
+      let lastJSON = "";
+      function showResult(data) {
+        lastJSON = JSON.stringify(data);
+        $("#asof").textContent = data.asOf
+          ? "data through " + data.asOf
+          : "data parsed";
+        const k = [
+          ["Runs", (data.runs || []).length],
+          ["Workouts", data.totalWorkouts || 0],
+          ["VO₂max", data.vo2Latest || "–"],
+          ["Sleep avg", data.sleepAvg ? data.sleepAvg + "h" : "–"],
+          ["Rest HR", data.rhrLatest || "–"],
+          ["Size", (lastJSON.length / 1024).toFixed(1) + " KB"],
+        ];
+        $("#kpis").innerHTML = k
+          .map(
+            (x) =>
+              `<div class="kpi"><div class="l">${x[0]}</div><div class="v">${x[1]}</div></div>`,
+          )
+          .join("");
+        $("#json").value = lastJSON;
+        $("#result").classList.remove("hidden");
+      }
+
+      /* file input + drag/drop */
+      const input = $("#file"),
+        box = $("#upbox");
+      input.addEventListener("change", (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f) run(f);
+      });
+      ["dragenter", "dragover"].forEach((ev) =>
+        box.addEventListener(ev, (e) => {
+          e.preventDefault();
+          box.classList.add("drag");
+        }),
+      );
+      ["dragleave", "drop"].forEach((ev) =>
+        box.addEventListener(ev, (e) => {
+          e.preventDefault();
+          box.classList.remove("drag");
+        }),
+      );
+      box.addEventListener("drop", (e) => {
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) run(f);
+      });
+
+      async function run(f) {
+        try {
+          await convert(f);
+        } catch (err) {
+          setProg(1, "");
+          $("#lbl").innerHTML =
+            '<span class="err">⚠️ ' + (err.message || err) + "</span>";
+          alert("Couldn't convert:\n\n" + (err.message || err));
+        }
+      }
+
+      /* actions */
+      $("#copy").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(lastJSON);
+          $("#lbl").innerHTML =
+            '<span class="ok">📋 Copied! Now paste into health_data.json on GitHub.</span>';
+        } catch (e) {
+          $("#json").classList.remove("hidden");
+          $("#json").select();
+          $("#lbl").textContent = "Select all in the box and copy manually.";
+        }
+      });
+      $("#save").addEventListener("click", async () => {
+        const blob = new Blob([lastJSON], { type: "application/json" });
+        const file = new File([blob], "health_data.json", {
+          type: "application/json",
+        });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "health_data.json" });
+            return;
+          } catch (e) {}
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "health_data.json";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+          a.remove();
+        }, 800);
+        $("#lbl").textContent =
+          "Saved health_data.json (check Downloads / Files).";
+      });
+      $("#toggle").addEventListener("click", () =>
+        $("#json").classList.toggle("hidden"),
+      );
+    </script>
+  </body>
+</html>
