@@ -1513,6 +1513,19 @@
           <i>meant</i> to be slow — they build the engine, so a grey tag there
           is good, not bad. Tap a run for HR & elevation.
         </div>
+
+        <h3 class="blk">
+          🔥 Recent classes
+          <span class="muted" style="font-weight: 400"
+            >· bootcamp / HIIT / strength</span
+          >
+        </h3>
+        <div class="card"><div id="perf-classes"></div></div>
+        <div class="note">
+          💪 Class metrics track your conditioning engine: avg/max HR shows
+          intensity, calories show work done, and duration flags whether you did
+          a standard class (~40–50 min) or added extra on top.
+        </div>
       </section>
 
       <!-- ===================== ROADMAP ===================== -->
@@ -3887,6 +3900,7 @@
         if (isNaN(num)) return null;
         const low = s.toLowerCase();
         if (low.includes("km")) return num * 1000;
+        if (low.includes("cm")) return num / 100;
         if (low.includes("ft") || low.includes("foot")) return num * 0.3048;
         if (low.includes("mi")) return num * 1609.34;
         return num; // assume metres
@@ -3898,6 +3912,7 @@
         if (isNaN(num)) return null;
         const u = (unit || "").toLowerCase();
         if (u === "km") return num * 1000;
+        if (u === "cm") return num / 100;
         if (u === "ft") return num * 0.3048;
         if (u === "mi") return num * 1609.34;
         if (u === "m") return num;
@@ -5024,7 +5039,9 @@
           if (dUnit[0] === "s") dur = dur / 60;
           else if (dUnit[0] === "h") dur = dur * 60;
 
-          // ---- distance (→ km) ----
+          // ---- distance (→ km). Modern exports store distance in a child
+          // <WorkoutStatistics ...DistanceWalkingRunning sum unit>, NOT the
+          // totalDistance attribute — so read both. ----
           let km = parseFloat(attr(openAttrs, "totalDistance") || "0");
           const kUnit = (
             attr(openAttrs, "totalDistanceUnit") || "km"
@@ -5032,11 +5049,18 @@
           if (kUnit === "mi") km *= 1.60934;
           else if (kUnit === "m") km /= 1000;
 
-          // ---- HR (avg/max) + elevation + energy from children ----
+          // ---- HR / distance / elevation / energy / running dynamics ----
           let ahr = null,
             mhr = null,
+            minhr = null,
             elev = null,
-            kcal = null;
+            kcal = null,
+            steps = null,
+            pwr = null,
+            vosc = null,
+            gct = null,
+            stride = null,
+            spdMax = null;
           if (inner) {
             const hrM =
               /<WorkoutStatistics[^>]*type="[^"]*HeartRate[^"]*"[^>]*>/.exec(
@@ -5045,8 +5069,22 @@
             if (hrM) {
               const a = attr(hrM[0], "average");
               const mx = attr(hrM[0], "maximum");
+              const mn = attr(hrM[0], "minimum");
               if (a) ahr = Math.round(parseFloat(a));
               if (mx) mhr = Math.round(parseFloat(mx));
+              if (mn) minhr = Math.round(parseFloat(mn));
+            }
+            // distance from child statistic (walking/running or cycling)
+            const dM =
+              /<WorkoutStatistics[^>]*type="[^"]*Distance(?:WalkingRunning|Cycling)[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (dM) {
+              const d = metersWith(
+                attr(dM[0], "sum") || attr(dM[0], "value"),
+                attr(dM[0], "unit"),
+              );
+              if (d != null && d > 0) km = d / 1000;
             }
             const elM =
               /<WorkoutStatistics[^>]*type="[^"]*(?:ElevationAscended|DistanceAscended)[^"]*"[^>]*>/.exec(
@@ -5077,7 +5115,59 @@
               const c = parseFloat(attr(enM[0], "sum") || "0");
               if (c > 0) kcal = Math.round(c);
             }
+            const stepM =
+              /<WorkoutStatistics[^>]*type="[^"]*StepCount[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (stepM) {
+              const c = parseFloat(attr(stepM[0], "sum") || "0");
+              if (c > 0) steps = Math.round(c);
+            }
+            const pwrM =
+              /<WorkoutStatistics[^>]*type="[^"]*RunningPower[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (pwrM) {
+              const c = parseFloat(attr(pwrM[0], "average") || "0");
+              if (c > 0) pwr = Math.round(c);
+            }
+            const voM =
+              /<WorkoutStatistics[^>]*type="[^"]*RunningVerticalOscillation[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (voM) {
+              const c = parseFloat(attr(voM[0], "average") || "0");
+              if (c > 0) vosc = +c.toFixed(1);
+            }
+            const gctM =
+              /<WorkoutStatistics[^>]*type="[^"]*RunningGroundContactTime[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (gctM) {
+              const c = parseFloat(attr(gctM[0], "average") || "0");
+              if (c > 0) gct = Math.round(c);
+            }
+            const strM =
+              /<WorkoutStatistics[^>]*type="[^"]*RunningStrideLength[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (strM) {
+              const c = parseFloat(attr(strM[0], "average") || "0");
+              if (c > 0) stride = +c.toFixed(2);
+            }
+            const spdM =
+              /<WorkoutStatistics[^>]*type="[^"]*RunningSpeed[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (spdM) {
+              const c = parseFloat(attr(spdM[0], "maximum") || "0");
+              if (c > 0) spdMax = c; // km/h
+            }
           }
+
+          // cadence (steps/min) and fastest-split pace (min/km)
+          const cad = steps && dur > 0 ? Math.round(steps / dur) : null;
+          const bestPace = spdMax ? +(60 / spdMax).toFixed(2) : null;
 
           if (dur > 0) {
             const a = {
@@ -5093,8 +5183,15 @@
             }
             if (ahr) a.ahr = ahr;
             if (mhr) a.mhr = mhr;
+            if (minhr) a.minhr = minhr;
             if (elev != null) a.elev = elev;
             if (kcal != null) a.kcal = kcal;
+            if (cad) a.cad = cad;
+            if (pwr) a.pwr = pwr;
+            if (vosc) a.vosc = vosc;
+            if (gct) a.gct = gct;
+            if (stride) a.stride = stride;
+            if (bestPace && a.pace && bestPace < a.pace) a.bestPace = bestPace;
             acts.push(a);
           }
 
@@ -5110,7 +5207,15 @@
               };
               if (ahr) rec.ahr = ahr;
               if (mhr) rec.mhr = mhr;
+              if (minhr) rec.minhr = minhr;
               if (elev != null) rec.elev = elev;
+              if (kcal != null) rec.kcal = kcal;
+              if (cad) rec.cad = cad;
+              if (pwr) rec.pwr = pwr;
+              if (vosc) rec.vosc = vosc;
+              if (gct) rec.gct = gct;
+              if (stride) rec.stride = stride;
+              if (bestPace && bestPace < rec.pace) rec.bestPace = bestPace;
               runs.push(rec);
             }
           }
@@ -5702,6 +5807,8 @@
         const maxHr6 = last6.length
           ? Math.max(...last6.map((r) => r.mhr || 0))
           : 0;
+        const cad6 = avgField(last6, "cad");
+        const pwr6 = avgField(last6.filter(isQuality), "pwr");
         snapEl.innerHTML = [
           ["Runs (6 wk)", last6.length, "", "var(--acc2)"],
           ["Volume", Math.round(totalKm) + " km", "", "var(--acc)"],
@@ -5731,6 +5838,18 @@
             "var(--mara)",
           ],
           ["Max HR seen", maxHr6 ? maxHr6 + " bpm" : "–", "", "var(--bad)"],
+          [
+            "Avg cadence",
+            cad6 ? Math.round(cad6) + " spm" : "–",
+            cad6 && cad6 >= 170 ? "efficient" : cad6 ? "lift toward 175+" : "",
+            cad6 && cad6 >= 170 ? "var(--good)" : "var(--warn)",
+          ],
+          [
+            "Avg power (q)",
+            pwr6 ? Math.round(pwr6) + " W" : "–",
+            "",
+            "var(--pur)",
+          ],
         ]
           .map(
             (x) => `
@@ -5820,6 +5939,7 @@
           .join("");
 
         renderRunList();
+        renderClassList();
       }
 
       /* ---- PLANNED vs ACTUAL for the current week ----
@@ -6003,6 +6123,42 @@
         return { verdict, vc, read };
       }
 
+      // build the metric chips for a session card — runs get the full set of
+      // running-dynamics metrics, classes get HR + energy.
+      function metricsOf(a) {
+        const m = [];
+        if (a.km) m.push(`📏 ${a.km.toFixed(2)} km`);
+        m.push(`⏱️ ${Math.round(a.dur)} min`);
+        if (a.pace != null) m.push(`⚡ ${paceStr(a.pace)}/km`);
+        if (a.bestPace) m.push(`🏁 ${paceStr(a.bestPace)}/km best`);
+        if (a.elev) m.push(`⛰️ ${a.elev} m`);
+        if (a.ahr)
+          m.push(
+            `❤️ ${a.ahr}${a.mhr ? "/" + a.mhr : ""} bpm${hrZone(a.ahr) ? " · Z" + hrZone(a.ahr) : ""}`,
+          );
+        if (a.minhr && !a.ahr) m.push(`❤️ min ${a.minhr}`);
+        if (a.cad) m.push(`👟 ${a.cad} spm`);
+        if (a.pwr) m.push(`🔋 ${a.pwr} W`);
+        if (a.stride) m.push(`📐 ${a.stride} m stride`);
+        if (a.vosc) m.push(`↕️ ${a.vosc} cm osc`);
+        if (a.gct) m.push(`⏲️ ${a.gct} ms GCT`);
+        if (a.kcal) m.push(`🔥 ${a.kcal} kcal`);
+        return m;
+      }
+      // one sense-check card (label + verdict + metric chips + coach read)
+      function senseCard(title, a, s) {
+        const metrics = metricsOf(a);
+        return `
+                <div class="card" style="padding:12px 14px;margin-bottom:8px;border-left:3px solid ${s.vc}">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                    <div style="font-weight:700;font-size:13.5px">${title}</div>
+                    <div style="font-weight:800;font-size:12px;color:${s.vc}">${s.verdict}</div>
+                  </div>
+                  <div class="muted" style="font-size:11.5px;margin-top:5px;display:flex;flex-wrap:wrap;gap:9px">${metrics.map((x) => `<span>${x}</span>`).join("")}</div>
+                  <div style="font-size:12.5px;margin-top:7px;color:var(--txt)">${s.read}</div>
+                </div>`;
+      }
+
       function renderPVA(runs) {
         const el = $("#perf-pva");
         if (!el) return;
@@ -6115,7 +6271,8 @@
               <td>${actualTxt}</td>
             </tr>`;
 
-          // ---- per-session sense-check cards (only for completed sessions) ----
+          // ---- per-session sense-check cards ----
+          // planned parts that were completed...
           parts
             .filter((p) => p.act)
             .forEach((p) => {
@@ -6132,26 +6289,49 @@
                 s = senseRun(p, a);
                 if (p.combined) s.read += " " + combinedNote;
               }
-              const metrics = [];
-              if (a.km) metrics.push(`📏 ${a.km.toFixed(2)} km`);
-              metrics.push(`⏱️ ${Math.round(a.dur)} min`);
-              if (a.pace != null) metrics.push(`⚡ ${paceStr(a.pace)}/km`);
-              if (a.elev) metrics.push(`⛰️ ${a.elev} m`);
-              if (a.ahr)
-                metrics.push(
-                  `❤️ ${a.ahr}${a.mhr ? "/" + a.mhr : ""} bpm${hrZone(a.ahr) ? " · Z" + hrZone(a.ahr) : ""}`,
-                );
-              if (a.kcal) metrics.push(`🔥 ${a.kcal} kcal`);
-              senseCards.push(`
-                <div class="card" style="padding:12px 14px;margin-bottom:8px;border-left:3px solid ${s.vc}">
-                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-                    <div style="font-weight:700;font-size:13.5px">${day.d} · ${p.icon || day.icon} ${p.name || day.t}</div>
-                    <div style="font-weight:800;font-size:12px;color:${s.vc}">${s.verdict}</div>
-                  </div>
-                  <div class="muted" style="font-size:11.5px;margin-top:5px;display:flex;flex-wrap:wrap;gap:9px">${metrics.map((m) => `<span>${m}</span>`).join("")}</div>
-                  <div style="font-size:12.5px;margin-top:7px;color:var(--txt)">${s.read}</div>
-                </div>`);
+              senseCards.push(
+                senseCard(
+                  `${day.d} · ${p.icon || day.icon} ${p.name || day.t}`,
+                  a,
+                  s,
+                ),
+              );
             });
+
+          // ...plus any extra / unplanned sessions (e.g. a class on a rest day,
+          // or a bonus run). These are credited as "EXTRA" with full metrics.
+          bonus.forEach((a) => {
+            const isClass = a.type === "bootcamp";
+            let s;
+            if (isClass) {
+              s = senseBootcamp(
+                { kind: "bootcamp", name: "Extra class" },
+                a,
+                "",
+              );
+            } else if (a.type === "run") {
+              s = senseRun({ kind: "run", name: "Bonus run" }, a);
+            } else {
+              s = {
+                verdict: "extra ➕",
+                vc: "var(--acc2)",
+                read: `Unplanned ${a.raw || a.type} session — bonus volume on top of the plan.`,
+              };
+            }
+            const label = day.rest
+              ? `${day.d} · ${KIND_ICON[a.type] || "➕"} Extra on a rest day`
+              : `${day.d} · ${KIND_ICON[a.type] || "➕"} Extra ${a.raw || a.type}`;
+            // tag the verdict so it reads as a bonus, not a planned hit
+            const s2 = {
+              verdict: "➕ extra · " + s.verdict,
+              vc: day.rest ? "var(--acc2)" : s.vc,
+              read:
+                (day.rest
+                  ? "Bonus session on a scheduled rest day — nice work, just keep an eye on recovery. "
+                  : "Extra unplanned session on top of the plan. ") + s.read,
+            };
+            senseCards.push(senseCard(label, a, s2));
+          });
         });
 
         const pctRun = plannedRun
@@ -6408,12 +6588,23 @@
               month: "short",
             });
             const ico = r.km >= 18 ? "🌄" : r.pace <= 4.6 ? "⚡" : "🏃";
+            // line 1: HR + elevation + calories
             const extra = [];
             if (r.ahr) extra.push("❤️ " + r.ahr);
             if (r.mhr) extra.push("max " + r.mhr);
             if (r.elev) extra.push("⛰️ " + r.elev + " m");
+            if (r.kcal) extra.push("🔥 " + r.kcal);
             const extraTxt = extra.length
               ? `<div class="rs" style="margin-top:2px">${extra.join(" · ")}</div>`
+              : "";
+            // line 2: running dynamics (cadence / power / stride / best split)
+            const dyn = [];
+            if (r.cad) dyn.push("👟 " + r.cad + " spm");
+            if (r.pwr) dyn.push("🔋 " + r.pwr + " W");
+            if (r.stride) dyn.push("📐 " + r.stride + " m");
+            if (r.bestPace) dyn.push("🏁 " + paceStr(r.bestPace) + "/km");
+            const dynTxt = dyn.length
+              ? `<div class="rs" style="margin-top:2px;color:var(--mut2)">${dyn.join(" · ")}</div>`
               : "";
             return `
             <div class="run-row">
@@ -6422,10 +6613,75 @@
                 <div class="rt">${r.km.toFixed(2)} km · ${Math.round(r.dur)} min</div>
                 <div class="rs">${nice}</div>
                 ${extraTxt}
+                ${dynTxt}
               </div>
               <div class="rp">
                 <div class="pace">${paceStr(r.pace)}<span style="font-size:11px;color:var(--mut)"> /km</span></div>
                 <div class="ptag" style="background:${cl.bg};color:${cl.c}">${cl.t}</div>
+              </div>
+            </div>`;
+          })
+          .join("");
+      }
+
+      // ---- Recent classes (bootcamp / HIIT / strength) with metrics ----
+      function renderClassList() {
+        const el = $("#perf-classes");
+        if (!el) return;
+        const list = (ACTS || [])
+          .filter((a) => a.type === "bootcamp" || a.type === "cardio")
+          .slice()
+          .sort((a, b) => (a.date < b.date ? 1 : -1))
+          .slice(0, 30);
+        if (!list.length) {
+          el.innerHTML = `<div class="empty">No classes yet. Load your export in <b>🔄 Health Sync</b> — bootcamp / HIIT / strength sessions appear here.</div>`;
+          return;
+        }
+        el.innerHTML = list
+          .map((a) => {
+            const dt = new Date(a.date + "T00:00:00");
+            const nice = dt.toLocaleDateString(undefined, {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            });
+            const z = hrZone(a.ahr);
+            // duration tag: short / standard / long(+extra)
+            let tag, tc, tbg;
+            if (a.dur < BOOTCAMP_MIN) {
+              tag = "short";
+              tc = "var(--warn)";
+              tbg = "rgba(251,189,35,.16)";
+            } else if (a.dur > BOOTCAMP_LONG) {
+              tag = "+extra";
+              tc = "var(--good)";
+              tbg = "rgba(54,211,153,.16)";
+            } else {
+              tag = "class";
+              tc = "var(--acc2)";
+              tbg = "rgba(58,160,255,.16)";
+            }
+            const extra = [];
+            if (a.ahr)
+              extra.push(
+                `❤️ ${a.ahr}${a.mhr ? "/" + a.mhr : ""}${z ? " · Z" + z : ""}`,
+              );
+            if (a.kcal) extra.push("🔥 " + a.kcal);
+            const extraTxt = extra.length
+              ? `<div class="rs" style="margin-top:2px">${extra.join(" · ")}</div>`
+              : "";
+            const ico = a.type === "cardio" ? "🚴" : "🔥";
+            return `
+            <div class="run-row">
+              <div class="run-dot">${ico}</div>
+              <div class="rmeta">
+                <div class="rt">${a.raw || "Class"} · ${Math.round(a.dur)} min</div>
+                <div class="rs">${nice}</div>
+                ${extraTxt}
+              </div>
+              <div class="rp">
+                <div class="pace" style="font-size:13px">${Math.round(a.dur)}<span style="font-size:11px;color:var(--mut)"> min</span></div>
+                <div class="ptag" style="background:${tbg};color:${tc}">${tag}</div>
               </div>
             </div>`;
           })
