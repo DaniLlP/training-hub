@@ -181,6 +181,13 @@
           rgba(58, 160, 255, 0.05)
         );
       }
+      .cd.n {
+        background: linear-gradient(
+          135deg,
+          rgba(167, 139, 250, 0.15),
+          rgba(58, 160, 255, 0.05)
+        );
+      }
       .cd .lab {
         font-size: 11px;
         text-transform: uppercase;
@@ -211,6 +218,9 @@
       }
       .cd.b .tgt {
         color: var(--acc);
+      }
+      .cd.n .tgt {
+        color: var(--pur);
       }
 
       /* Tabs */
@@ -992,6 +1002,18 @@
         color: var(--mut2);
         margin-top: 5px;
       }
+      .bar-mini {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .bar-mini > span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.4s;
+      }
       .run-row {
         display: flex;
         align-items: center;
@@ -1234,6 +1256,12 @@
             <div class="lab2">days to go · 15 Mar 2027</div>
             <div class="tgt">🎯 Target: sub 2:45:00 (3:54/km)</div>
           </div>
+          <div class="cd n">
+            <div class="lab">⚡ Cursa dels Nassos</div>
+            <div class="big"><span id="cd-n-days">–</span></div>
+            <div class="lab2">days to go · 10 km · 31 Dec 2026</div>
+            <div class="tgt">🎯 Target: sub 35:00 (3:30/km)</div>
+          </div>
         </div>
       </div>
     </header>
@@ -1404,6 +1432,9 @@
             >
           </div>
         </div>
+
+        <!-- per-session sense-check: did each session hit what it was meant to? -->
+        <div id="perf-sense" style="margin-top: 12px"></div>
 
         <h3 class="blk">🎯 Goal trend</h3>
         <div class="card"><div id="perf-goals"></div></div>
@@ -2000,7 +2031,13 @@
         },
       ];
 
-      /* ---------- ATHLETE / GOALS ---------- */
+      /* ---------- ALL TRAINING ACTIVITIES (every logged workout, not just runs) ----------
+   Each: {date, type:'run|bootcamp|cardio|recovery|other', dur(min), km?, pace?,
+   ahr?, mhr?, elev?, kcal?}. Drives the planned-vs-actual sense-check so
+   bootcamp / strength / strides sessions are verified, not just runs.
+   Replaced wholesale when you load a fresh export. Seeded from RUNS until a
+   real export is loaded so the page still works offline. */
+      let ACTS = [];
       const ATHLETE = {
         name: "Dani",
         age: 33,
@@ -2011,6 +2048,7 @@
         hyroxDate: "2026-11-14",
         behobiaDate: "2026-11-08",
         maraDate: "2027-03-15",
+        nassosDate: "2026-12-31",
       };
 
       /* ---------- RACE GOALS (drive the Performance Tracker) ----------
@@ -2048,6 +2086,17 @@
           date: ATHLETE.maraDate,
           color: "var(--mara)",
           note: "42.2 km @ 3:54/km. Won on durability + high weekly volume.",
+        },
+        {
+          key: "nassos",
+          e: "⚡",
+          name: "Cursa dels Nassos",
+          dist: 10,
+          time: "35:00",
+          goalPace: 3.5,
+          date: ATHLETE.nassosDate,
+          color: "var(--pur)",
+          note: "10 km @ 3:30/km on Dec 31. A flat, fast city 10K — pure leg-speed test off the HYROX block.",
         },
       ];
 
@@ -3781,6 +3830,56 @@
         const m = new RegExp(name + '="([^"]*)"').exec(tag);
         return m ? m[1] : null;
       };
+      /* normalise an Apple HKWorkoutActivityType into a coarse kind that the
+         planned-vs-actual matcher understands. Dani's bootcamp logs as a
+         functional-strength / HIIT / cross-training type. */
+      function kindOfRaw(raw) {
+        const a = (raw || "").replace(/^HKWorkoutActivityType/, "");
+        if (/Running|Track|Trail/i.test(a)) return "run";
+        if (
+          /FunctionalStrengthTraining|TraditionalStrengthTraining|CrossTraining|HighIntensityIntervalTraining|MixedCardio|StepTraining|Boxing|Kickboxing/i.test(
+            a,
+          )
+        )
+          return "bootcamp";
+        if (/Cycling|Cardio|Elliptical|Rowing|Swimming|StairClimbing/i.test(a))
+          return "cardio";
+        if (
+          /Yoga|Flexibility|Cooldown|Mind|Pilates|Barre|Walking|Hiking|Mobility/i.test(
+            a,
+          )
+        )
+          return "recovery";
+        return "other";
+      }
+      const KIND_ICON = {
+        run: "🏃",
+        bootcamp: "🔥",
+        cardio: "🚴",
+        recovery: "🧘",
+        other: "🏋️",
+      };
+      /* HR zone (1-5) for an average HR, using the athlete's reserve. */
+      function hrZone(hr) {
+        if (!hr) return null;
+        const max = ATHLETE.maxHR,
+          rest = ATHLETE.restHR,
+          rr = max - rest;
+        const pct = (hr - rest) / rr;
+        if (pct < 0.6) return 1;
+        if (pct < 0.7) return 2;
+        if (pct < 0.8) return 3;
+        if (pct < 0.9) return 4;
+        return 5;
+      }
+      const ZONE_COL = [
+        "var(--mut)",
+        "var(--good)",
+        "var(--acc)",
+        "var(--warn)",
+        "var(--hyrox)",
+        "var(--bad)",
+      ];
       function metersOf(raw) {
         if (!raw) return null;
         const s = String(raw).trim();
@@ -3862,6 +3961,7 @@
       $("#cd-h-days").textContent = daysTo(ATHLETE.hyroxDate);
       $("#cd-b-days").textContent = daysTo(ATHLETE.behobiaDate);
       $("#cd-m-days").textContent = daysTo(ATHLETE.maraDate);
+      $("#cd-n-days").textContent = daysTo(ATHLETE.nassosDate);
       $("#p-vo2").textContent = HEALTH.vo2.latest;
       $("#p-rhr").textContent = HEALTH.rhr.latest;
       $("#p-hrv").textContent = HEALTH.hrv.latest;
@@ -4897,8 +4997,11 @@
           );
         }
 
-        // Workouts (count + monthly volume + running activities w/ HR & elevation)
+        // Workouts: capture EVERY logged session (not just runs) so the
+        // planned-vs-actual tracker can verify bootcamp / strength / strides
+        // too — plus the running subset (with pace) for the run charts.
         const runs = [];
+        const acts = [];
         // capture each full Workout block (open tag + children + close), or a
         // self-closing <Workout .../>. The "s" flag lets . span newlines.
         const wkRe = /<Workout\b([^>]*?)(\/>|>([\s\S]*?)<\/Workout>)/g;
@@ -4911,70 +5014,104 @@
           if (!sd) continue;
           wkDates.push(sd);
           const act = attr(openAttrs, "workoutActivityType") || "";
-          if (/Running/i.test(act)) {
-            let dur = parseFloat(attr(openAttrs, "duration") || "0");
-            const dUnit = (
-              attr(openAttrs, "durationUnit") || "min"
-            ).toLowerCase();
-            if (dUnit[0] === "s") dur = dur / 60;
-            else if (dUnit[0] === "h") dur = dur * 60;
-            let km = parseFloat(attr(openAttrs, "totalDistance") || "0");
-            const kUnit = (
-              attr(openAttrs, "totalDistanceUnit") || "km"
-            ).toLowerCase();
-            if (kUnit === "mi") km *= 1.60934;
-            else if (kUnit === "m") km /= 1000;
-            // HR (avg/max) + elevation from child WorkoutStatistics/MetadataEntry
-            let ahr = null,
-              mhr = null,
-              elev = null;
-            if (inner) {
-              const hrM =
-                /<WorkoutStatistics[^>]*type="[^"]*HeartRate[^"]*"[^>]*>/.exec(
+          const kind = kindOfRaw(act);
+
+          // ---- duration (→ minutes) ----
+          let dur = parseFloat(attr(openAttrs, "duration") || "0");
+          const dUnit = (
+            attr(openAttrs, "durationUnit") || "min"
+          ).toLowerCase();
+          if (dUnit[0] === "s") dur = dur / 60;
+          else if (dUnit[0] === "h") dur = dur * 60;
+
+          // ---- distance (→ km) ----
+          let km = parseFloat(attr(openAttrs, "totalDistance") || "0");
+          const kUnit = (
+            attr(openAttrs, "totalDistanceUnit") || "km"
+          ).toLowerCase();
+          if (kUnit === "mi") km *= 1.60934;
+          else if (kUnit === "m") km /= 1000;
+
+          // ---- HR (avg/max) + elevation + energy from children ----
+          let ahr = null,
+            mhr = null,
+            elev = null,
+            kcal = null;
+          if (inner) {
+            const hrM =
+              /<WorkoutStatistics[^>]*type="[^"]*HeartRate[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (hrM) {
+              const a = attr(hrM[0], "average");
+              const mx = attr(hrM[0], "maximum");
+              if (a) ahr = Math.round(parseFloat(a));
+              if (mx) mhr = Math.round(parseFloat(mx));
+            }
+            const elM =
+              /<WorkoutStatistics[^>]*type="[^"]*(?:ElevationAscended|DistanceAscended)[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (elM) {
+              const e = metersWith(
+                attr(elM[0], "sum") || attr(elM[0], "value"),
+                attr(elM[0], "unit"),
+              );
+              if (e != null) elev = Math.round(e);
+            }
+            if (elev == null) {
+              const meM =
+                /<MetadataEntry[^>]*key="HKElevationAscended"[^>]*>/.exec(
                   inner,
                 );
-              if (hrM) {
-                const a = attr(hrM[0], "average");
-                const mx = attr(hrM[0], "maximum");
-                if (a) ahr = Math.round(parseFloat(a));
-                if (mx) mhr = Math.round(parseFloat(mx));
-              }
-              const elM =
-                /<WorkoutStatistics[^>]*type="[^"]*(?:ElevationAscended|DistanceAscended)[^"]*"[^>]*>/.exec(
-                  inner,
-                );
-              if (elM) {
-                const e = metersWith(
-                  attr(elM[0], "sum") || attr(elM[0], "value"),
-                  attr(elM[0], "unit"),
-                );
+              if (meM) {
+                const e = metersOf(attr(meM[0], "value"));
                 if (e != null) elev = Math.round(e);
               }
-              if (elev == null) {
-                const meM =
-                  /<MetadataEntry[^>]*key="HKElevationAscended"[^>]*>/.exec(
-                    inner,
-                  );
-                if (meM) {
-                  const e = metersOf(attr(meM[0], "value"));
-                  if (e != null) elev = Math.round(e);
-                }
-              }
             }
-            if (km > 0.3 && dur > 0) {
+            const enM =
+              /<WorkoutStatistics[^>]*type="[^"]*ActiveEnergyBurned[^"]*"[^>]*>/.exec(
+                inner,
+              );
+            if (enM) {
+              const c = parseFloat(attr(enM[0], "sum") || "0");
+              if (c > 0) kcal = Math.round(c);
+            }
+          }
+
+          if (dur > 0) {
+            const a = {
+              date: sd.slice(0, 10),
+              type: kind,
+              raw: act.replace(/^HKWorkoutActivityType/, ""),
+              dur: +dur.toFixed(1),
+            };
+            if (km > 0.3) a.km = +km.toFixed(2);
+            if (a.km && kind === "run") {
               const pace = dur / km;
-              if (pace >= 2 && pace <= 20) {
-                const rec = {
-                  date: sd.slice(0, 10),
-                  dur: +dur.toFixed(1),
-                  km: +km.toFixed(2),
-                  pace: +pace.toFixed(2),
-                };
-                if (ahr) rec.ahr = ahr;
-                if (mhr) rec.mhr = mhr;
-                if (elev != null) rec.elev = elev;
-                runs.push(rec);
-              }
+              if (pace >= 2 && pace <= 20) a.pace = +pace.toFixed(2);
+            }
+            if (ahr) a.ahr = ahr;
+            if (mhr) a.mhr = mhr;
+            if (elev != null) a.elev = elev;
+            if (kcal != null) a.kcal = kcal;
+            acts.push(a);
+          }
+
+          // running subset (keeps the existing run charts/lists working)
+          if (kind === "run" && km > 0.3 && dur > 0) {
+            const pace = dur / km;
+            if (pace >= 2 && pace <= 20) {
+              const rec = {
+                date: sd.slice(0, 10),
+                dur: +dur.toFixed(1),
+                km: +km.toFixed(2),
+                pace: +pace.toFixed(2),
+              };
+              if (ahr) rec.ahr = ahr;
+              if (mhr) rec.mhr = mhr;
+              if (elev != null) rec.elev = elev;
+              runs.push(rec);
             }
           }
         }
@@ -4990,6 +5127,10 @@
         if (runs.length) {
           runs.sort((a, b) => (a.date < b.date ? -1 : 1));
           out.runs = runs;
+        }
+        if (acts.length) {
+          acts.sort((a, b) => (a.date < b.date ? -1 : 1));
+          out.acts = acts;
         }
 
         // SLEEP — SleepAnalysis records. Sum "asleep" durations per night.
@@ -5084,6 +5225,9 @@
         }
         if (d.runs && d.runs.length) {
           RUNS = d.runs;
+        }
+        if (d.acts && d.acts.length) {
+          ACTS = d.acts;
         }
         // refresh pills + everything
         $("#p-vo2").textContent = HEALTH.vo2.latest;
@@ -5678,7 +5822,187 @@
         renderRunList();
       }
 
-      /* ---- PLANNED vs ACTUAL for the current week ---- */
+      /* ---- PLANNED vs ACTUAL for the current week ----
+         Session-aware: matches every planned component (run / bootcamp /
+         strides / strength / combo) to what was actually logged, detects
+         "combined logs" (e.g. bootcamp + strides saved as one workout) and
+         runs a sense-check on each session. */
+
+      // a normal bootcamp class is ~45 min; beyond LONG it bundled extra work
+      const BOOTCAMP_TYPICAL = 46;
+      const BOOTCAMP_MIN = 38;
+      const BOOTCAMP_LONG = 53;
+
+      // typical minutes a planned component should take (for combined-log math)
+      function expMin(kind) {
+        return kind === "bootcamp"
+          ? BOOTCAMP_TYPICAL
+          : kind === "strides"
+            ? 12
+            : kind === "strength"
+              ? 30
+              : kind === "combo"
+                ? 50
+                : 45; // run / long / default
+      }
+
+      // break a planned day into its component parts
+      function plannedParts(day) {
+        const parts = [];
+        (day.blocks || []).forEach((b) => {
+          const lab = (b.label || "").toLowerCase();
+          let kind;
+          if (b.cls === "bootcamp") kind = "bootcamp";
+          else if (/stride/.test(lab)) kind = "strides";
+          else if (b.cls === "combo") kind = "combo";
+          else if (b.cls === "run") kind = /long/.test(lab) ? "long" : "run";
+          else if (b.cls === "station")
+            kind = day.rest ? "recovery" : "strength";
+          else return;
+          parts.push({ kind, name: b.label, icon: b.icon, cls: b.cls });
+        });
+        // de-dupe identical kinds that come from one combined block label
+        return parts;
+      }
+
+      // which actual workout kinds can satisfy a planned part
+      function wantKinds(kind) {
+        if (kind === "bootcamp") return ["bootcamp"];
+        if (kind === "strength") return ["bootcamp", "other", "recovery"];
+        if (kind === "recovery") return ["recovery", "cardio", "other"];
+        // run / long / strides / combo
+        return ["run", "cardio"];
+      }
+
+      // match a single day's plan against the day's logged activities
+      function matchDay(day, acts) {
+        const parts = plannedParts(day);
+        acts = (acts || []).slice();
+        const totalMin = acts.reduce((a, b) => a + (b.dur || 0), 0);
+        const used = new Set();
+
+        // 1) direct assignment by kind (prefer the longest suitable act)
+        parts.forEach((p) => {
+          p.act = null;
+          p.combined = false;
+          const want = wantKinds(p.kind);
+          let best = -1,
+            bestDur = -1;
+          acts.forEach((a, i) => {
+            if (used.has(i)) return;
+            if (!want.includes(a.type)) return;
+            if ((a.dur || 0) > bestDur) {
+              bestDur = a.dur || 0;
+              best = i;
+            }
+          });
+          if (best >= 0) {
+            used.add(best);
+            p.act = acts[best];
+          }
+        });
+
+        // 2) combined-log detection: an unmatched part is credited if a matched
+        //    session ran long enough to have bundled it in (e.g. bootcamp class
+        //    logged at 60 min covering the 6×20s strides; or the whole thing
+        //    logged as one running workout).
+        const matchedExp = parts
+          .filter((p) => p.act)
+          .reduce((a, p) => a + expMin(p.kind), 0);
+        let overflow = totalMin - matchedExp; // spare logged minutes
+        const longHost = parts
+          .filter((p) => p.act)
+          .sort((a, b) => (b.act.dur || 0) - (a.act.dur || 0))[0];
+        parts
+          .filter((p) => !p.act)
+          .forEach((p) => {
+            // strides/run add-ons need only a little overflow to be credible
+            const need = p.kind === "strides" ? 5 : expMin(p.kind) * 0.45;
+            if (
+              longHost &&
+              overflow >= need &&
+              (longHost.act.dur || 0) >= BOOTCAMP_LONG
+            ) {
+              p.combined = true;
+              p.act = longHost.act;
+              overflow -= need;
+            }
+          });
+
+        // leftover logged sessions not tied to any plan = bonus work
+        const bonus = acts.filter((a, i) => !used.has(i));
+        return { parts, bonus, totalMin };
+      }
+
+      // sense-check a run/strides/combo session vs what it was meant to be
+      function senseRun(part, a) {
+        const lab = (part.name || "").toLowerCase();
+        const z = hrZone(a.ahr);
+        let target, verdict, vc, read;
+        if (part.kind === "strides" || /stride/.test(lab)) {
+          // strides are short bursts inside an easy session → don't grade avg pace
+          verdict = "logged ✓";
+          vc = "var(--good)";
+          read = `Strides session in. Avg pace reflects the easy filler, not the 3:10–3:25/km bursts — that's expected. ${a.ahr ? `Avg HR ${a.ahr} (Z${z}).` : ""}`;
+        } else if (/threshold|tempo/.test(lab)) {
+          const ok = a.pace && a.pace <= 4.4;
+          verdict = ok ? "on target 🟢" : "a touch easy 🟡";
+          vc = ok ? "var(--good)" : "var(--warn)";
+          read = `Threshold target ~4:00–4:25/km. You held <b>${paceStr(a.pace)}/km</b>${a.ahr ? `, avg HR ${a.ahr} (Z${z})` : ""}.`;
+        } else if (/vo₂|vo2/.test(lab)) {
+          const ok = a.pace && a.pace <= 3.8;
+          verdict = ok ? "sharp 🟢" : "build it 🟡";
+          vc = ok ? "var(--good)" : "var(--warn)";
+          read = `VO₂ reps target ~3:30–3:42/km. Session avg <b>${paceStr(a.pace)}/km</b>${a.ahr ? `, avg HR ${a.ahr} (Z${z})` : ""}.`;
+        } else if (/marathon|mp|race-pace|race pace/.test(lab)) {
+          const ok = a.pace && a.pace <= 4.05;
+          verdict = ok ? "MP locked 🟢" : "close 🟡";
+          vc = ok ? "var(--good)" : "var(--warn)";
+          read = `Marathon-pace target ~3:54/km. You ran <b>${paceStr(a.pace)}/km</b>${a.ahr ? `, avg HR ${a.ahr} (Z${z})` : ""}.`;
+        } else if (part.kind === "long" || /long/.test(lab)) {
+          verdict = "distance in 🟢";
+          vc = "var(--good)";
+          read = `Long run: <b>${a.km?.toFixed(1)} km</b> in ${Math.round(a.dur)} min${a.elev ? `, ${a.elev} m climb` : ""}${a.ahr ? `, avg HR ${a.ahr} (Z${z})` : ""}. Time on feet is the win here.`;
+        } else if (
+          part.kind === "combo" ||
+          /hyrox|race sim|simulation/.test(lab)
+        ) {
+          const ok = a.pace && a.pace <= 5.05;
+          verdict = ok ? "race effort 🟢" : "controlled 🟡";
+          vc = ok ? "var(--good)" : "var(--warn)";
+          read = `HYROX-style runs target ~4:45–5:00/km under fatigue. You averaged <b>${paceStr(a.pace)}/km</b>${a.ahr ? `, avg HR ${a.ahr} (Z${z})` : ""}.`;
+        } else {
+          // easy / recovery run — graded on staying aerobic (Z2)
+          const ok = z == null || z <= 2;
+          verdict = ok ? "easy = easy 🟢" : "ran it hot 🟡";
+          vc = ok ? "var(--good)" : "var(--warn)";
+          read = `Easy day target Zone 2 (HR ~130–145). ${a.ahr ? `Avg HR <b>${a.ahr}</b> (Z${z})${ok ? " — nicely controlled." : " — keep easy days truly easy so the engine grows."}` : `Pace <b>${paceStr(a.pace)}/km</b>.`}`;
+        }
+        return { verdict, vc, read };
+      }
+
+      // sense-check a bootcamp / strength session
+      function senseBootcamp(part, a, combinedNote) {
+        const z = hrZone(a.ahr);
+        let verdict, vc, read;
+        const dur = a.dur || 0;
+        if (dur < BOOTCAMP_MIN) {
+          verdict = "short 🟡";
+          vc = "var(--warn)";
+          read = `Only ${Math.round(dur)} min — a full class is ~40–50 min. Looks like a shortened or partial session.`;
+        } else if (dur > BOOTCAMP_LONG) {
+          verdict = "class + extra 🟢";
+          vc = "var(--good)";
+          read = `${Math.round(dur)} min — longer than a standard 40–50 min class, so you added work on top (strides / extra conditioning).`;
+        } else {
+          verdict = "solid class 🟢";
+          vc = "var(--good)";
+          read = `${Math.round(dur)} min class${a.ahr ? `, avg HR ${a.ahr} (Z${z}), peak ${a.mhr || "–"}` : ""}${a.kcal ? `, ${a.kcal} kcal` : ""}. Right in the normal range.`;
+        }
+        if (combinedNote) read += " " + combinedNote;
+        return { verdict, vc, read };
+      }
+
       function renderPVA(runs) {
         const el = $("#perf-pva");
         if (!el) return;
@@ -5697,47 +6021,82 @@
         const today = new Date();
         today.setHours(23, 59, 59, 0);
 
-        // index actual runs by yyyy-mm-dd within this week
-        const wkRuns = {};
-        (runs || []).forEach((r) => {
-          if (isoWeekKey(r.date) === fmtDate(monday))
-            (wkRuns[r.date] ??= []).push(r);
+        // index ALL activities (not just runs) by date within this week
+        const wkActs = {};
+        (ACTS && ACTS.length
+          ? ACTS
+          : (runs || []).map((r) => ({ ...r, type: "run" }))
+        ).forEach((a) => {
+          if (isoWeekKey(a.date) === fmtDate(monday))
+            (wkActs[a.date] ??= []).push(a);
         });
 
         let rows = "";
+        const senseCards = [];
         let plannedRun = 0,
-          doneRun = 0;
+          doneRun = 0,
+          plannedAll = 0,
+          doneAll = 0;
+
         tpl.days.forEach((day, idx) => {
           const date = addDays(monday, idx);
           const ds = fmtDate(date);
-          const isRunDay = day.blocks.some(
-            (b) => b.cls === "run" || b.cls === "combo",
-          );
-          const acts = wkRuns[ds] || [];
+          const acts = wkActs[ds] || [];
           const past = date <= today;
-          if (isRunDay && !day.rest) plannedRun++;
+          const { parts, bonus } = matchDay(day, acts);
+
+          const runParts = parts.filter((p) =>
+            ["run", "long", "strides", "combo"].includes(p.kind),
+          );
+          const trainingParts = parts.filter((p) => p.kind !== "recovery");
+          if (!day.rest && runParts.length) plannedRun++;
+          if (!day.rest && trainingParts.length) plannedAll++;
+
+          const runDone = runParts.some((p) => p.act);
+          const allDone =
+            trainingParts.length && trainingParts.every((p) => p.act);
+          const someDone = trainingParts.some((p) => p.act);
+          if (!day.rest && runParts.length && runDone) doneRun++;
+          if (!day.rest && trainingParts.length && allDone) doneAll++;
+
+          // ---- build the "Actual" cell ----
           let status, stColor, actualTxt;
           if (acts.length) {
-            const km = acts.reduce((a, b) => a + b.km, 0);
-            const best = Math.min(...acts.map((r) => r.pace));
-            const eg = acts.reduce((a, b) => a + (b.elev || 0), 0);
-            const ah = avgField(acts, "ahr");
-            actualTxt = `<b>${km.toFixed(1)} km</b> @ ${paceStr(best)}/km${eg ? ` · ${Math.round(eg)} m` : ""}${ah ? ` · ${Math.round(ah)} bpm` : ""}`;
-            if (isRunDay) {
-              doneRun++;
+            const bits = parts
+              .filter((p) => p.act)
+              .map((p) => {
+                const a = p.act;
+                const m =
+                  a.pace != null
+                    ? `${a.km ? a.km.toFixed(1) + " km @ " : ""}${paceStr(a.pace)}/km`
+                    : `${Math.round(a.dur)} min`;
+                return `${p.combined ? "↳ " : ""}${m}`;
+              });
+            // bonus / unplanned sessions
+            bonus.forEach((a) => {
+              bits.push(
+                `+${KIND_ICON[a.type] || ""}${a.km ? a.km.toFixed(1) + "km" : Math.round(a.dur) + "min"}`,
+              );
+            });
+            actualTxt = bits.length
+              ? bits.join(" · ")
+              : `${Math.round(acts.reduce((s, a) => s + a.dur, 0))} min logged`;
+            if (day.rest) {
+              status = "done";
+              stColor = "var(--acc2)";
+            } else if (allDone) {
               status = "done";
               stColor = "var(--good)";
+            } else if (someDone) {
+              status = "partial";
+              stColor = "var(--warn)";
             } else {
               status = "done";
-              stColor = "var(--good)"; // bonus run on a non-run day
+              stColor = "var(--good)"; // logged something on a non-matching day
             }
           } else if (day.rest) {
             actualTxt = '<span class="miss">rest / recovery</span>';
             status = "rest";
-            stColor = "var(--mut2)";
-          } else if (!isRunDay) {
-            actualTxt = '<span class="miss">bootcamp / strength</span>';
-            status = "other";
             stColor = "var(--mut2)";
           } else if (past) {
             actualTxt = '<span class="miss">— not logged</span>';
@@ -5748,26 +6107,146 @@
             status = "soon";
             stColor = "var(--mut2)";
           }
+
           rows += `
             <tr>
               <td class="pday"><span class="st" style="background:${stColor}"></span>${day.d}</td>
               <td>${day.icon} ${day.t}<div class="muted" style="font-size:11px">${day.tag}</div></td>
               <td>${actualTxt}</td>
             </tr>`;
+
+          // ---- per-session sense-check cards (only for completed sessions) ----
+          parts
+            .filter((p) => p.act)
+            .forEach((p) => {
+              const a = p.act;
+              let s;
+              const combinedNote = p.combined
+                ? `Logged together with the ${day.t.toLowerCase()} session (one combined entry) — credited here.`
+                : "";
+              if (p.kind === "bootcamp" || p.kind === "strength") {
+                s = senseBootcamp(p, a, "");
+                if (p.combined)
+                  s.read += " (counted from the combined log on this day).";
+              } else {
+                s = senseRun(p, a);
+                if (p.combined) s.read += " " + combinedNote;
+              }
+              const metrics = [];
+              if (a.km) metrics.push(`📏 ${a.km.toFixed(2)} km`);
+              metrics.push(`⏱️ ${Math.round(a.dur)} min`);
+              if (a.pace != null) metrics.push(`⚡ ${paceStr(a.pace)}/km`);
+              if (a.elev) metrics.push(`⛰️ ${a.elev} m`);
+              if (a.ahr)
+                metrics.push(
+                  `❤️ ${a.ahr}${a.mhr ? "/" + a.mhr : ""} bpm${hrZone(a.ahr) ? " · Z" + hrZone(a.ahr) : ""}`,
+                );
+              if (a.kcal) metrics.push(`🔥 ${a.kcal} kcal`);
+              senseCards.push(`
+                <div class="card" style="padding:12px 14px;margin-bottom:8px;border-left:3px solid ${s.vc}">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                    <div style="font-weight:700;font-size:13.5px">${day.d} · ${p.icon || day.icon} ${p.name || day.t}</div>
+                    <div style="font-weight:800;font-size:12px;color:${s.vc}">${s.verdict}</div>
+                  </div>
+                  <div class="muted" style="font-size:11.5px;margin-top:5px;display:flex;flex-wrap:wrap;gap:9px">${metrics.map((m) => `<span>${m}</span>`).join("")}</div>
+                  <div style="font-size:12.5px;margin-top:7px;color:var(--txt)">${s.read}</div>
+                </div>`);
+            });
         });
+
         const pctRun = plannedRun
           ? Math.round((doneRun / plannedRun) * 100)
           : 0;
+        const pctAll = plannedAll
+          ? Math.round((doneAll / plannedAll) * 100)
+          : 0;
         el.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-size:13px;font-weight:700">Run sessions completed</div>
-            <div style="font-weight:800;color:${pctRun >= 80 ? "var(--good)" : pctRun >= 40 ? "var(--warn)" : "var(--mut)"}">${doneRun}/${plannedRun}</div>
+            <div style="font-size:13px;font-weight:700">Sessions completed (all types)</div>
+            <div style="font-weight:800;color:${pctAll >= 80 ? "var(--good)" : pctAll >= 40 ? "var(--warn)" : "var(--mut)"}">${doneAll}/${plannedAll}</div>
           </div>
-          <div class="bar-mini"><span style="width:${pctRun}%;background:${pctRun >= 80 ? "var(--good)" : "var(--acc)"}"></span></div>
-          <table class="pva" style="margin-top:12px">
+          <div class="bar-mini"><span style="width:${pctAll}%;background:${pctAll >= 80 ? "var(--good)" : "var(--acc)"}"></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px">
+            <div style="font-size:12px;color:var(--mut)">of which run sessions</div>
+            <div style="font-weight:700;font-size:12px;color:var(--acc2)">${doneRun}/${plannedRun}</div>
+          </div>
+          <table class="pva" style="margin-top:8px">
             <tr><th>Day</th><th>Planned</th><th>Actual</th></tr>
             ${rows}
           </table>`;
+
+        // render the per-session sense-check + week/long-term summary
+        renderSenseCheck(senseCards, runs, {
+          doneAll,
+          plannedAll,
+          doneRun,
+          plannedRun,
+        });
+      }
+
+      /* ---- per-session sense-check + week & long-term trend summary ---- */
+      function renderSenseCheck(cards, runs, wk) {
+        const el = $("#perf-sense");
+        if (!el) return;
+        const haveData = ACTS && ACTS.length;
+
+        // weekly sense: how did the week go vs plan
+        let weekRead;
+        if (!haveData) {
+          weekRead =
+            "Load your Apple Health export in <b>🔄 Health Sync</b> to verify each session (bootcamp, strides and runs) against the plan.";
+        } else if (wk.plannedAll === 0) {
+          weekRead = "No sessions scheduled this week.";
+        } else {
+          const pct = Math.round((wk.doneAll / wk.plannedAll) * 100);
+          weekRead =
+            pct >= 80
+              ? `Strong week — <b>${wk.doneAll}/${wk.plannedAll}</b> planned sessions done. Consistency like this is exactly what the build needs.`
+              : pct >= 50
+                ? `Decent week — <b>${wk.doneAll}/${wk.plannedAll}</b> done. Try to close the gap on the missed sessions; the run quality days matter most.`
+                : `Light week so far — <b>${wk.doneAll}/${wk.plannedAll}</b> done. Don't chase missed sessions all at once; pick up the next quality run.`;
+        }
+
+        // long-term trend toward goals (4-week running volume + nearest goal pace)
+        let longRead = "";
+        if (haveData && runs && runs.length) {
+          const today = new Date();
+          const last28 = runs.filter(
+            (r) => (today - new Date(r.date)) / 864e5 <= 28,
+          );
+          const wks = {};
+          last28.forEach(
+            (r) =>
+              (wks[isoWeekKey(r.date)] = (wks[isoWeekKey(r.date)] || 0) + r.km),
+          );
+          const wkCount = Object.keys(wks).length || 1;
+          const avgWk = last28.reduce((a, b) => a + b.km, 0) / wkCount;
+          const nearest = GOALS.slice().sort(
+            (a, b) => daysTo(a.date) - daysTo(b.date),
+          )[0];
+          const pool = last28.filter(
+            (r) => r.km >= Math.min(5, nearest.dist * 0.4),
+          );
+          const best = pool.length
+            ? Math.min(...pool.map((r) => r.pace))
+            : null;
+          const gap = best != null ? best - nearest.goalPace : null;
+          longRead = `Over the last 4 weeks you're averaging <b>${avgWk.toFixed(0)} km/week</b>. Next race <b>${nearest.e} ${nearest.name}</b> in <b>${daysTo(nearest.date)} days</b> — ${
+            best == null
+              ? "log a few quality runs to read your pace trend."
+              : gap <= 0.05
+                ? `your best recent pace (<b>${paceStr(best)}/km</b>) is already at the ${paceStr(nearest.goalPace)}/km goal. Hold the consistency. 🎯`
+                : `best recent pace <b>${paceStr(best)}/km</b> vs goal <b>${paceStr(nearest.goalPace)}/km</b> — about <b>${Math.round(gap * 60)}s/km</b> to find. Keep building volume + one weekly quality session.`
+          }`;
+        }
+
+        el.innerHTML = `
+          <div class="card" style="padding:13px 15px;margin-bottom:10px">
+            <div style="font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px">🔍 Did the work match the plan?</div>
+            <div class="muted" style="font-size:12.5px;margin-top:6px">${weekRead}</div>
+            ${longRead ? `<div class="muted" style="font-size:12.5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)"><b style="color:var(--txt)">📈 Long-term:</b> ${longRead}</div>` : ""}
+          </div>
+          ${cards.length ? `<h3 class="blk" style="margin:10px 0 8px">✅ Session-by-session sense-check</h3>${cards.join("")}` : ""}`;
       }
 
       /* ---- realistic readiness verdict (training vs goals) ---- */
