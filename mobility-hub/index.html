@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+    />
+    <title>Mobility Hub — Evidence-based mobility training</title>
+    <meta
+      name="description"
+      content="A production-ready, science-based mobility app: FMS-style assessments, adaptive 5–60 minute sessions, progress projections and Apple-style dashboards. Works offline, no account needed."
+    />
+    <meta name="theme-color" content="#0a0a0d" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Mobility Hub" />
+    <link rel="apple-touch-icon" href="icons/icon.svg" />
+    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Mobility Hub" />
+    <meta
+      property="og:description"
+      content="Evidence-based mobility training with assessments, adaptive sessions and progress projections."
+    />
+    <meta property="og:type" content="website" />
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-tab="today">
+    <!-- Onboarding overlay (shown on first run) -->
+    <div id="onboard-root" aria-live="polite"></div>
+
+    <div id="app">
+      <header id="topbar"></header>
+      <main id="view" role="main"></main>
+      <nav id="tabbar" aria-label="Primary"></nav>
+    </div>
+
+    <div id="sheet-root"></div>
+    <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
+
+    <noscript>
+      <div
+        style="
+          padding: 2rem;
+          color: #fff;
+          font-family: system-ui;
+          text-align: center;
+        "
+      >
+        <h1>Mobility Hub</h1>
+        <p>
+          This app needs JavaScript enabled to run. Please enable it and reload.
+        </p>
+      </div>
+    </noscript>
+
+    <!-- Data layer (order matters: references first establishes MH namespace) -->
+    <script src="js/references.js"></script>
+    <script src="js/exercises.js"></script>
+    <script src="js/catalog.js"></script>
+    <script src="js/assessments.js"></script>
+    <script src="js/programs.js"></script>
+    <!-- State + logic -->
+    <script src="js/store.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/videos.js"></script>
+    <!-- App controller + views -->
+    <script src="script.js"></script>
+  </body>
+</html>

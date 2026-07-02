@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Mobility Hub">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15151c"/>
+      <stop offset="1" stop-color="#07070a"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4fe9d3"/>
+      <stop offset="1" stop-color="#22b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#bg)"/>
+  <!-- concentric motion rings (open arcs) -->
+  <g fill="none" stroke-linecap="round">
+    <circle cx="256" cy="256" r="150" stroke="#ff375f" stroke-opacity="0.9" stroke-width="26" stroke-dasharray="706 942" transform="rotate(-90 256 256)"/>
+    <circle cx="256" cy="256" r="110" stroke="url(#mint)" stroke-width="26" stroke-dasharray="605 691" transform="rotate(-90 256 256)"/>
+    <circle cx="256" cy="256" r="70" stroke="#0a84ff" stroke-opacity="0.95" stroke-width="26" stroke-dasharray="308 440" transform="rotate(-90 256 256)"/>
+  </g>
+  <!-- center node -->
+  <circle cx="256" cy="256" r="22" fill="#f5f5f7"/>
+</svg>

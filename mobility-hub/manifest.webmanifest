@@ -1,0 +1,16 @@
+{
+  "name": "Mobility Hub",
+  "short_name": "Mobility",
+  "description": "Evidence-based mobility training: assessments, adaptive 5–60 minute sessions, progress projections and Apple-style dashboards.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0d",
+  "theme_color": "#0a0a0d",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

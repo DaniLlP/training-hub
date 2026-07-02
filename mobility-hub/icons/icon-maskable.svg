@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Mobility Hub">
+  <defs>
+    <linearGradient id="bgm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15151c"/>
+      <stop offset="1" stop-color="#07070a"/>
+    </linearGradient>
+    <linearGradient id="mintm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4fe9d3"/>
+      <stop offset="1" stop-color="#22b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bgm)"/>
+  <!-- content kept within the ~80% maskable safe zone -->
+  <g fill="none" stroke-linecap="round">
+    <circle cx="256" cy="256" r="118" stroke="#ff375f" stroke-opacity="0.9" stroke-width="22" stroke-dasharray="556 742" transform="rotate(-90 256 256)"/>
+    <circle cx="256" cy="256" r="86" stroke="url(#mintm)" stroke-width="22" stroke-dasharray="470 540" transform="rotate(-90 256 256)"/>
+    <circle cx="256" cy="256" r="54" stroke="#0a84ff" stroke-opacity="0.95" stroke-width="22" stroke-dasharray="238 340" transform="rotate(-90 256 256)"/>
+  </g>
+  <circle cx="256" cy="256" r="17" fill="#f5f5f7"/>
+</svg>
